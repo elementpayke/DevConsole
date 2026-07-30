@@ -1,0 +1,96 @@
+@import "tailwindcss";
+
+:root {
+  --ink: oklch(0.19 0.02 264);
+  --muted: oklch(0.48 0.015 264);
+  --subtle: oklch(0.5 0.012 264);
+  --faint: oklch(0.55 0.012 264);
+  --line: oklch(0.91 0.006 264);
+  --line-soft: oklch(0.95 0.004 264);
+  --line-strong: oklch(0.88 0.006 264);
+  --surface: oklch(0.96 0.006 264);
+  --primary: #4133d7;
+  --primary-hover: #352ab0;
+  --primary-tint: #f0effc;
+}
+
+@theme inline {
+  --color-ink: var(--ink);
+  --color-muted: var(--muted);
+  --color-subtle: var(--subtle);
+  --color-faint: var(--faint);
+  --color-line: var(--line);
+  --color-line-soft: var(--line-soft);
+  --color-line-strong: var(--line-strong);
+  --color-surface: var(--surface);
+  --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
+  --color-primary-tint: var(--primary-tint);
+  --font-sans: var(--font-manrope);
+  --font-mono: var(--font-jetbrains-mono);
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.3s ease;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-manrope), sans-serif;
+  background:
+    radial-gradient(circle at 8% 8%, oklch(0.9 0.05 276 / 0.5) 0%, transparent 38%),
+    radial-gradient(circle at 92% 15%, oklch(0.88 0.07 200 / 0.4) 0%, transparent 42%),
+    radial-gradient(circle at 30% 90%, oklch(0.9 0.06 340 / 0.35) 0%, transparent 45%),
+    var(--surface);
+  background-attachment: fixed;
+  min-height: 100vh;
+  color: var(--ink);
+}
+
+a {
+  color: var(--primary);
+}
+
+a:hover {
+  color: var(--primary-hover);
+}
+
+.glass-card {
+  background: oklch(1 0 0 / 0.5);
+  backdrop-filter: blur(16px) saturate(160%);
+  -webkit-backdrop-filter: blur(16px) saturate(160%);
+  border: 1px solid oklch(1 0 0 / 0.5);
+  box-shadow: 0 4px 20px oklch(0.2 0.02 264 / 0.06);
+  border-radius: 11px;
+}
+
+.glass-panel {
+  background: oklch(1 0 0 / 0.55);
+  backdrop-filter: blur(20px) saturate(160%);
+  -webkit-backdrop-filter: blur(20px) saturate(160%);
+}
+
+/* Near-opaque, unlike .glass-card — for surfaces over a dark/dimmed backdrop
+   (auth screen, modals, drawers), where dark --ink/--muted text needs a
+   solidly light card underneath it to read, not a 50%-translucent one. */
+.solid-card {
+  background: oklch(1 0 0 / 0.94);
+  backdrop-filter: blur(24px) saturate(160%);
+  -webkit-backdrop-filter: blur(24px) saturate(160%);
+  border: 1px solid oklch(1 0 0 / 0.6);
+}
+
+.mono {
+  font-family: var(--font-jetbrains-mono), monospace;
+}

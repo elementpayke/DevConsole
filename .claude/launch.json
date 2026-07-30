@@ -1,0 +1,17 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "devconsole",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev"],
+      "port": 3000
+    },
+    {
+      "name": "aggregator",
+      "runtimeExecutable": "bash",
+      "runtimeArgs": ["-c", "cd /home/joe/kazi/company/ELEMENTPAY/element-pay-aggregator && source aggregator_env/bin/activate && uvicorn app.main:app --host 0.0.0.0 --port 8000"],
+      "port": 8000
+    }
+  ]
+}
