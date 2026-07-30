@@ -9,8 +9,8 @@
   --line-soft: oklch(0.95 0.004 264);
   --line-strong: oklch(0.88 0.006 264);
   --surface: oklch(0.96 0.006 264);
-  --primary: #4133d7;
-  --primary-hover: #352ab0;
+  --primary: #4339ca;
+  --primary-hover: #362ea3;
   --primary-tint: #f0effc;
 }
 
