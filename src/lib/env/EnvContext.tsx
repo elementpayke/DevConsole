@@ -6,6 +6,12 @@ export type Environment = "sandbox" | "live";
 
 const STORAGE_KEY = "elementpay-devconsole:environment";
 
+// Set per-deployment via NEXT_PUBLIC_ENVIRONMENT (baked in at build time) so the
+// sandbox vs. live instances of this same codebase show the correct badge
+// without any client-side toggle. Falls back to "sandbox" if unset.
+const DEPLOYED_ENVIRONMENT: Environment =
+  process.env.NEXT_PUBLIC_ENVIRONMENT === "live" ? "live" : "sandbox";
+
 type EnvContextValue = {
   environment: Environment;
   toggleEnvironment: () => void;
@@ -15,7 +21,7 @@ type EnvContextValue = {
 const EnvContext = createContext<EnvContextValue | null>(null);
 
 export function EnvProvider({ children }: { children: React.ReactNode }) {
-  const [environment, setEnvironment] = useState<Environment>("sandbox");
+  const [environment, setEnvironment] = useState<Environment>(DEPLOYED_ENVIRONMENT);
 
   useEffect(() => {
     const stored = window.localStorage.getItem(STORAGE_KEY);

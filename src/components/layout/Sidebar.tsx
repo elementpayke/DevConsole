@@ -2,8 +2,18 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth/AuthContext";
+
+function SignOutIcon() {
+  return (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4" />
+      <path strokeLinecap="round" strokeLinejoin="round" d="M16 17l5-5-5-5" />
+      <path strokeLinecap="round" d="M21 12H9" />
+    </svg>
+  );
+}
 
 const NAV_ITEMS = [
   {
@@ -55,8 +65,14 @@ const NAV_ITEMS = [
 
 export function Sidebar() {
   const pathname = usePathname();
-  const { user } = useAuth();
+  const router = useRouter();
+  const { user, logout } = useAuth();
   const initial = (user?.email?.[0] ?? "?").toUpperCase();
+
+  function handleSignOut() {
+    logout();
+    router.push("/login");
+  }
 
   return (
     <div
@@ -106,24 +122,34 @@ export function Sidebar() {
         </div>
       </div>
 
-      <Link
-        href="/profile"
-        className="flex items-center gap-2.5 border-t border-line px-[22px] py-3.5"
+      <div
+        className="flex items-center gap-1 border-t border-line px-[14px] py-3.5"
         style={{ background: pathname === "/profile" ? "oklch(0.97 0.004 264)" : "transparent" }}
       >
-        <div
-          className="flex h-[30px] w-[30px] flex-shrink-0 items-center justify-center rounded-full text-[13px] font-bold"
-          style={{ background: "#f0effc", color: "#352ab0" }}
-        >
-          {initial}
-        </div>
-        <div className="min-w-0">
-          <div className="truncate text-[13px] font-bold">{user?.email ?? "Account"}</div>
-          <div className="truncate text-[11.5px] text-faint">
-            {user?.role ? user.role[0].toUpperCase() + user.role.slice(1) : ""}
+        <Link href="/profile" className="flex min-w-0 flex-1 items-center gap-2.5 rounded-lg px-2 py-1">
+          <div
+            className="flex h-[30px] w-[30px] flex-shrink-0 items-center justify-center rounded-full text-[13px] font-bold"
+            style={{ background: "#f0effc", color: "#352ab0" }}
+          >
+            {initial}
           </div>
-        </div>
-      </Link>
+          <div className="min-w-0">
+            <div className="truncate text-[13px] font-bold">{user?.email ?? "Account"}</div>
+            <div className="truncate text-[11.5px] text-faint">
+              {user?.role ? user.role[0].toUpperCase() + user.role.slice(1) : ""}
+            </div>
+          </div>
+        </Link>
+        <button
+          type="button"
+          onClick={handleSignOut}
+          title="Sign out"
+          aria-label="Sign out"
+          className="flex h-8 w-8 flex-shrink-0 cursor-pointer items-center justify-center rounded-lg text-subtle hover:bg-surface hover:text-[oklch(0.55_0.19_25)]"
+        >
+          <SignOutIcon />
+        </button>
+      </div>
     </div>
   );
 }
