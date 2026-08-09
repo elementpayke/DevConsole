@@ -53,3 +53,21 @@ export function changePassword(token: string, current_password: string, new_pass
     unwrap: false,
   });
 }
+
+export function verifyEmail(email: string, verification_code: string) {
+  return apiFetch<{ message: string }>("/auth/verify-email", {
+    method: "POST",
+    body: { email, verification_code },
+    unwrap: false,
+  });
+}
+
+export function resendVerification(email: string) {
+  // Aggregator reuses EmailVerificationSchema for this route (email + code required
+  // by the schema) but only uses email. Send a placeholder code.
+  return apiFetch<{ message: string }>("/auth/resend-verification", {
+    method: "POST",
+    body: { email, verification_code: "000000" },
+    unwrap: false,
+  });
+}

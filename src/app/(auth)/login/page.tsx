@@ -25,6 +25,16 @@ function LockIcon() {
   );
 }
 
+function isUnverifiedAccountError(message: unknown) {
+  const msg = String(message ?? "").toLowerCase();
+  return (
+    msg.includes("not activated") ||
+    msg.includes("verify your email") ||
+    msg.includes("not verified") ||
+    msg.includes("account is inactive")
+  );
+}
+
 export default function LoginPage() {
   const { login } = useAuth();
   const router = useRouter();
@@ -42,7 +52,16 @@ export default function LoginPage() {
       await login(email, password);
       router.push("/dashboard");
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Something went wrong. Please try again.");
+      const message =
+        err instanceof ApiError ? err.message : "Something went wrong. Please try again.";
+      if (isUnverifiedAccountError(message)) {
+        const trimmed = email.trim();
+        router.push(
+          `/verify-email?email=${encodeURIComponent(trimmed)}&reason=unverified`,
+        );
+        return;
+      }
+      setError(message);
     } finally {
       setLoading(false);
     }

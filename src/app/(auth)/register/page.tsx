@@ -2,45 +2,37 @@
 
 import { useState, type FormEvent } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useAuth, ApiError } from "@/lib/auth/AuthContext";
 import { PasswordInput } from "@/components/auth/PasswordInput";
 import { Button } from "@/components/ui/Button";
 
 export default function RegisterPage() {
   const { register } = useAuth();
+  const router = useRouter();
   const [businessEmail, setBusinessEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const [registered, setRegistered] = useState(false);
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setError(null);
+    if (password !== confirmPassword) {
+      setError("Passwords do not match.");
+      return;
+    }
     setLoading(true);
     try {
-      await register(businessEmail, password);
-      setRegistered(true);
+      const email = businessEmail.trim();
+      await register(email, password);
+      router.push(`/verify-email?email=${encodeURIComponent(email)}`);
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Something went wrong. Please try again.");
     } finally {
       setLoading(false);
     }
-  }
-
-  if (registered) {
-    return (
-      <div>
-        <h1 className="mb-1.5 text-2xl font-extrabold tracking-tight">Check your email</h1>
-        <p className="mb-2 text-[13.5px] text-muted">
-          We&apos;ve sent a verification link to <strong className="text-ink">{businessEmail}</strong>.
-          Verify your account, then log in to reach your dashboard.
-        </p>
-        <Link href="/login">
-          <Button className="mt-5 w-full py-3.5 text-[14.5px]">Back to log in</Button>
-        </Link>
-      </div>
-    );
   }
 
   return (
@@ -59,6 +51,7 @@ export default function RegisterPage() {
             value={businessEmail}
             onChange={(e) => setBusinessEmail(e.target.value)}
             placeholder="you@company.com"
+            autoComplete="email"
             className="w-full box-border rounded-lg border border-line-strong px-3.5 py-2.5 font-sans text-[13.5px]"
           />
         </div>
@@ -70,10 +63,22 @@ export default function RegisterPage() {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             placeholder="At least 8 characters"
+            autoComplete="new-password"
           />
           <p className="mt-1.5 text-[11px] text-faint">
             8+ characters, one uppercase, one lowercase, one number.
           </p>
+        </div>
+        <div>
+          <div className="mb-1.5 text-[12.5px] font-bold">Confirm password</div>
+          <PasswordInput
+            required
+            minLength={8}
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+            placeholder="Re-enter your password"
+            autoComplete="new-password"
+          />
         </div>
 
         {error && <p className="text-[12.5px] font-medium text-[oklch(0.55_0.19_25)]">{error}</p>}
