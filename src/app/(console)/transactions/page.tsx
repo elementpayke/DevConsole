@@ -2,18 +2,25 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { Header } from "@/components/layout/Header";
-import { TransactionFilters, type Filters } from "@/components/transactions/TransactionFilters";
+import {
+  DEFAULT_FILTERS,
+  TransactionFilters,
+  orderInDateRange,
+  resolveDateRange,
+  type Filters,
+} from "@/components/transactions/TransactionFilters";
 import { TransactionsTable } from "@/components/transactions/TransactionsTable";
 import { TransactionDrawer } from "@/components/transactions/TransactionDrawer";
+import { ExportOrdersButtons } from "@/components/transactions/ExportOrdersButtons";
 import { useAuth } from "@/lib/auth/AuthContext";
+import { useEnvironment } from "@/lib/env/EnvContext";
 import { listMyOrders } from "@/lib/api/orders";
 import { ApiError } from "@/lib/api/client";
 import type { Order } from "@/lib/types";
 
-const DEFAULT_FILTERS: Filters = { search: "", status: "all", orderType: "all", token: "all" };
-
 export default function TransactionsPage() {
   const { accessToken } = useAuth();
+  const { environment } = useEnvironment();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -50,17 +57,20 @@ export default function TransactionsPage() {
     [orders],
   );
 
+  const dateRange = useMemo(() => resolveDateRange(filters), [filters]);
+
   const filtered = useMemo(() => {
     const search = filters.search.trim().toLowerCase();
     return orders.filter((o) => {
       if (filters.token !== "all" && o.token !== filters.token) return false;
+      if (!orderInDateRange(o.created_at, dateRange)) return false;
       if (!search) return true;
       return (
         o.order_id.toLowerCase().includes(search) ||
         (o.phone_number ?? "").toLowerCase().includes(search)
       );
     });
-  }, [orders, filters.search, filters.token]);
+  }, [orders, filters.search, filters.token, dateRange]);
 
   return (
     <>
@@ -68,7 +78,15 @@ export default function TransactionsPage() {
       <div className="p-7">
         <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
           <h1 className="text-[22px] font-extrabold tracking-tight">Orders</h1>
-          <TransactionFilters filters={filters} onChange={setFilters} tokens={tokens} />
+          <div className="flex flex-wrap items-center gap-2.5">
+            <TransactionFilters filters={filters} onChange={setFilters} tokens={tokens} />
+            <ExportOrdersButtons
+              orders={filtered}
+              environment={environment}
+              periodLabel={dateRange.label}
+              loading={loading}
+            />
+          </div>
         </div>
 
         {error && (

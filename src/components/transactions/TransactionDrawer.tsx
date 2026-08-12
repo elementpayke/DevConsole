@@ -1,5 +1,10 @@
+"use client";
+
+import { useState } from "react";
 import { Badge } from "@/components/ui/Badge";
+import { Button } from "@/components/ui/Button";
 import { colors, statusStyle } from "@/lib/theme";
+import { downloadOrderReceipt } from "@/lib/export/receiptPdf";
 import type { Order } from "@/lib/types";
 
 type TimelineStep = { label: string; time: string; dotColor: string };
@@ -35,6 +40,7 @@ function buildTimeline(order: Order): TimelineStep[] {
 export function TransactionDrawer({ order, onClose }: { order: Order; onClose: () => void }) {
   const style = statusStyle(order.status);
   const timeline = buildTimeline(order);
+  const [includeCrypto, setIncludeCrypto] = useState(true);
 
   return (
     <>
@@ -98,6 +104,44 @@ export function TransactionDrawer({ order, onClose }: { order: Order; onClose: (
               </div>
             </div>
           )}
+
+          <div className="mb-5">
+            <div className="mb-2 text-[11px] font-bold tracking-wide text-faint uppercase">
+              Receipt format
+            </div>
+            <div className="mb-2.5 grid grid-cols-2 gap-1.5 rounded-lg border border-line-strong bg-surface p-1">
+              <button
+                type="button"
+                onClick={() => setIncludeCrypto(false)}
+                className={`cursor-pointer rounded-md px-2.5 py-2 text-[12.5px] font-bold transition-colors ${
+                  !includeCrypto
+                    ? "bg-white text-ink shadow-sm"
+                    : "bg-transparent text-muted hover:text-ink"
+                }`}
+              >
+                Fiat only
+              </button>
+              <button
+                type="button"
+                onClick={() => setIncludeCrypto(true)}
+                className={`cursor-pointer rounded-md px-2.5 py-2 text-[12.5px] font-bold transition-colors ${
+                  includeCrypto
+                    ? "bg-white text-ink shadow-sm"
+                    : "bg-transparent text-muted hover:text-ink"
+                }`}
+              >
+                With crypto
+              </button>
+            </div>
+            <Button
+              type="button"
+              variant="secondary"
+              className="w-full"
+              onClick={() => downloadOrderReceipt(order, { includeCrypto })}
+            >
+              Download receipt PDF
+            </Button>
+          </div>
 
           <div className="mb-5 border-t border-line pt-[18px]">
             <div className="mb-3 text-[12.5px] font-bold">Timeline</div>
