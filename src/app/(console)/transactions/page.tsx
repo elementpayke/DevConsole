@@ -19,7 +19,7 @@ import { ApiError } from "@/lib/api/client";
 import type { Order } from "@/lib/types";
 
 export default function TransactionsPage() {
-  const { accessToken } = useAuth();
+  const { isAuthenticated } = useAuth();
   const { environment } = useEnvironment();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
@@ -28,12 +28,12 @@ export default function TransactionsPage() {
   const [selected, setSelected] = useState<Order | null>(null);
 
   useEffect(() => {
-    if (!accessToken) return;
+    if (!isAuthenticated) return;
     let cancelled = false;
     // Re-shows the loading state on every filter change, not just on mount.
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setLoading(true);
-    listMyOrders(accessToken, {
+    listMyOrders({
       status_filter: filters.status === "all" ? undefined : filters.status,
       order_type: filters.orderType === "all" ? undefined : filters.orderType,
     })
@@ -50,7 +50,7 @@ export default function TransactionsPage() {
     return () => {
       cancelled = true;
     };
-  }, [accessToken, filters.status, filters.orderType]);
+  }, [isAuthenticated, filters.status, filters.orderType]);
 
   const tokens = useMemo(
     () => Array.from(new Set(orders.map((o) => o.token))).sort(),

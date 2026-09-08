@@ -14,16 +14,16 @@ import { ApiError } from "@/lib/api/client";
 import type { ApiKeyInfo, DashboardStats } from "@/lib/types";
 
 export default function DashboardPage() {
-  const { accessToken, user } = useAuth();
+  const { isAuthenticated, user } = useAuth();
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [apiKeys, setApiKeys] = useState<ApiKeyInfo[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!accessToken) return;
+    if (!isAuthenticated) return;
     let cancelled = false;
-    Promise.all([getDashboardStats(accessToken), listApiKeys(accessToken)])
+    Promise.all([getDashboardStats(), listApiKeys()])
       .then(([dashboard, keys]) => {
         if (cancelled) return;
         setStats(dashboard);
@@ -38,7 +38,7 @@ export default function DashboardPage() {
     return () => {
       cancelled = true;
     };
-  }, [accessToken]);
+  }, [isAuthenticated]);
 
   const firstName = user?.email?.split("@")[0] ?? "there";
   const hasApiKey = apiKeys.length > 0;

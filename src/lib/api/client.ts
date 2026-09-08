@@ -1,6 +1,7 @@
 import type { ApiEnvelope } from "@/lib/types";
 
-const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000";
+/** Same-origin BFF — never point the browser at the aggregator directly. */
+const BFF_PREFIX = "/api/proxy";
 
 export class ApiError extends Error {
   status: number;
@@ -17,12 +18,19 @@ export class ApiError extends Error {
 type RequestOptions = {
   method?: "GET" | "POST" | "PATCH" | "DELETE" | "PUT";
   body?: unknown;
-  token?: string | null;
   query?: Record<string, string | number | boolean | undefined | null>;
+  /** Absolute same-origin path (e.g. /api/auth/login). Defaults to BFF proxy. */
+  absolutePath?: string;
 };
 
-function buildUrl(path: string, query?: RequestOptions["query"]) {
-  const url = new URL(path.replace(/^\//, ""), BASE_URL.endsWith("/") ? BASE_URL : `${BASE_URL}/`);
+function buildUrl(path: string, query?: RequestOptions["query"], absolutePath?: string) {
+  const href = absolutePath
+    ? absolutePath
+    : `${BFF_PREFIX}/${path.replace(/^\//, "")}`;
+  const url = new URL(
+    href,
+    typeof window !== "undefined" ? window.location.origin : "http://localhost:3000",
+  );
   if (query) {
     for (const [key, value] of Object.entries(query)) {
       if (value !== undefined && value !== null && value !== "") {
@@ -30,54 +38,55 @@ function buildUrl(path: string, query?: RequestOptions["query"]) {
       }
     }
   }
-  return url.toString();
+  return `${url.pathname}${url.search}`;
 }
 
 /**
- * Thin fetch wrapper around the aggregator API. Some endpoints (auth) return
- * the payload directly, while others wrap it in { status, message, data } —
- * callers pass `unwrap: false` for the former.
+ * Thin fetch wrapper around the Next.js BFF. Auth cookies are httpOnly and
+ * sent automatically via credentials: "include". Tokens never live in JS.
  */
 export async function apiFetch<T>(
   path: string,
   options: RequestOptions & { unwrap?: boolean } = {},
 ): Promise<T> {
-  const { method = "GET", body, token, query, unwrap = true } = options;
+  const { method = "GET", body, query, unwrap = true, absolutePath } = options;
 
   const headers: Record<string, string> = {};
-  // Only set Content-Type when sending a body — an unnecessary header on a
-  // bodyless GET turns it into a "non-simple" request and forces a CORS
-  // preflight that a stricter server might not expect.
   if (body !== undefined) headers["Content-Type"] = "application/json";
-  if (token) headers.Authorization = `Bearer ${token}`;
 
   let res: Response;
   try {
-    res = await fetch(buildUrl(path, query), {
+    res = await fetch(buildUrl(path, query, absolutePath), {
       method,
       headers,
       body: body !== undefined ? JSON.stringify(body) : undefined,
+      credentials: "include",
     });
   } catch {
-    // fetch() throws the same generic TypeError for a dead server, a DNS
-    // failure, and a CORS-blocked request — the browser deliberately hides
-    // which one it was, so don't assert a specific cause here.
-    const origin = typeof window !== "undefined" ? window.location.origin : "this origin";
     throw new ApiError(
-      `Request to ${BASE_URL} did not get a response. Either the server is unreachable, ` +
-        `or it's rejecting cross-origin requests from ${origin} (CORS) — check the browser's ` +
-        `network tab for the failed request to see which.`,
+      `Request to ${absolutePath ?? BFF_PREFIX} failed — the Next.js server may be down or unreachable.`,
       0,
     );
   }
 
   const text = await res.text();
-  const json = text ? JSON.parse(text) : null;
+  let json: unknown = null;
+  if (text) {
+    try {
+      json = JSON.parse(text);
+    } catch {
+      json = { message: text };
+    }
+  }
 
   if (!res.ok) {
     const message =
-      (json && (json.message || json.detail)) ?? `Request failed with status ${res.status}`;
-    throw new ApiError(message, res.status, json);
+      (json &&
+        typeof json === "object" &&
+        ((json as { message?: string }).message ||
+          (json as { detail?: string }).detail)) ??
+      `Request failed with status ${res.status}`;
+    throw new ApiError(String(message), res.status, json);
   }
 
   if (!unwrap) return json as T;

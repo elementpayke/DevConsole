@@ -1,0 +1,18 @@
+/** Server-only aggregator env. Never import from client components. */
+
+export function getAggregatorBaseUrl(): string {
+  const base = process.env.AGGREGATOR_BASE_URL ?? "http://localhost:8000/api/v1";
+  return base.replace(/\/$/, "");
+}
+
+export function getFeClientSecret(): string {
+  const secret = process.env.FE_CLIENT_SECRET;
+  if (!secret) {
+    throw new Error("FE_CLIENT_SECRET is not configured");
+  }
+  return secret;
+}
+
+export function isProductionRuntime(): boolean {
+  return process.env.NODE_ENV === "production";
+}

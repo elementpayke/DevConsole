@@ -1,38 +1,53 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# ElementPay Dev Console
+
+Next.js console for ElementPay merchants (dashboard, API keys, transactions).
+
+## Architecture
+
+Browser calls go to same-origin BFF routes. The Next.js server forwards to the
+aggregator and attaches `X-FE-Client-Secret` from server-only env. JWTs are
+stored in **httpOnly** cookies (`ep_access_token`, `ep_refresh_token`) — never
+in `localStorage` or the JS bundle. The secret must never use `NEXT_PUBLIC_*`.
+
+```
+Browser → /api/auth/*     → Aggregator (+ X-FE-Client-Secret; sets httpOnly cookies on login)
+Browser → /api/proxy/...  → Aggregator (+ secret + Bearer from cookie)
+```
 
 ## Getting Started
 
-First, run the development server:
-
 ```bash
+cp .env.example .env.local
+# set FE_CLIENT_SECRET and AGGREGATOR_BASE_URL
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Environment
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+| Variable | Client? | Purpose |
+|----------|---------|---------|
+| `FE_CLIENT_SECRET` | **No** (server only) | Shared with aggregator; sent as `X-FE-Client-Secret` |
+| `AGGREGATOR_BASE_URL` | **No** (server only) | Aggregator API root, e.g. `https://sandbox.elementpay.net/api/v1` |
+| `NEXT_PUBLIC_ENVIRONMENT` | Yes | `sandbox` or `live` badge in the UI |
 
-## Learn More
+### Staging / production (Vercel)
 
-To learn more about Next.js, take a look at the following resources:
+Set `FE_CLIENT_SECRET` and `AGGREGATOR_BASE_URL` as server env vars (not
+`NEXT_PUBLIC_`). Use the same `FE_CLIENT_SECRET` value as the aggregator.
+Do not set `NEXT_PUBLIC_FE_CLIENT_SECRET`.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+When the aggregator enables `FE_CLIENT_SECRET_REQUIRED` and
+`JWT_ORIGIN_CHECK_REQUIRED`, dapp auth and JWT flows continue to work because
+the BFF supplies the secret (Origin check is skipped on that path).
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Scripts
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
-
+```bash
+npm run lint
+npm run test          # unit + security checks
+npm run test:security # secret-leak / cookie flag checks
+npm run build
+```

@@ -13,7 +13,7 @@ import { ApiError } from "@/lib/api/client";
 import { colors } from "@/lib/theme";
 
 export default function ProfilePage() {
-  const { user, accessToken, logout } = useAuth();
+  const { user, isAuthenticated, logout } = useAuth();
   const router = useRouter();
 
   const [currentPassword, setCurrentPassword] = useState("");
@@ -33,10 +33,10 @@ export default function ProfilePage() {
       setError("New password and confirmation don't match.");
       return;
     }
-    if (!accessToken) return;
+    if (!isAuthenticated) return;
     setLoading(true);
     try {
-      await authApi.changePassword(accessToken, currentPassword, newPassword);
+      await authApi.changePassword(currentPassword, newPassword);
       setSuccess(true);
       setCurrentPassword("");
       setNewPassword("");
@@ -48,8 +48,8 @@ export default function ProfilePage() {
     }
   }
 
-  function handleSignOut() {
-    logout();
+  async function handleSignOut() {
+    await logout();
     router.push("/login");
   }
 
