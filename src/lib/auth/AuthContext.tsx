@@ -10,91 +10,78 @@ import {
 } from "react";
 import * as authApi from "@/lib/api/auth";
 import { ApiError } from "@/lib/api/client";
-import type { AuthTokens, User } from "@/lib/types";
-
-const STORAGE_KEY = "elementpay-devconsole:auth";
-
-type StoredSession = {
-  tokens: AuthTokens;
-  user: User | null;
-};
+import type { User } from "@/lib/types";
 
 type AuthContextValue = {
   user: User | null;
-  accessToken: string | null;
   isHydrated: boolean;
   isAuthenticated: boolean;
-  login: (email: string, password: string) => Promise<void>;
+  login: (email: string, password: string, remember?: boolean) => Promise<void>;
   register: (email: string, password: string) => Promise<User>;
-  logout: () => void;
+  logout: () => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
-function readSession(): StoredSession | null {
-  if (typeof window === "undefined") return null;
-  try {
-    const raw = window.localStorage.getItem(STORAGE_KEY);
-    return raw ? (JSON.parse(raw) as StoredSession) : null;
-  } catch {
-    return null;
-  }
-}
-
-function writeSession(session: StoredSession | null) {
-  if (typeof window === "undefined") return;
-  if (session) {
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(session));
-  } else {
-    window.localStorage.removeItem(STORAGE_KEY);
-  }
-}
+const LEGACY_STORAGE_KEY = "elementpay-devconsole:auth";
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [session, setSession] = useState<StoredSession | null>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [isHydrated, setIsHydrated] = useState(false);
 
   useEffect(() => {
-    // Reads localStorage post-hydration, deliberately — doing this during
-    // render would desync server/client output and trigger a hydration error.
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setSession(readSession());
-    setIsHydrated(true);
+    // Clear legacy localStorage JWTs from pre-BFF builds (tokens must not live in JS).
+    try {
+      window.localStorage.removeItem(LEGACY_STORAGE_KEY);
+    } catch {
+      /* ignore */
+    }
+
+    let cancelled = false;
+    authApi
+      .getSession()
+      .then((session) => {
+        if (!cancelled) setUser(session.user ?? null);
+      })
+      .catch(() => {
+        if (!cancelled) setUser(null);
+      })
+      .finally(() => {
+        if (!cancelled) setIsHydrated(true);
+      });
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
-  const login = useCallback(async (email: string, password: string) => {
-    const tokens = await authApi.login(email, password);
-    let user: User | null = null;
-    try {
-      user = await authApi.getMe(tokens.access_token);
-    } catch {
-      user = null;
-    }
-    const next = { tokens, user };
-    setSession(next);
-    writeSession(next);
+  const login = useCallback(async (email: string, password: string, remember = true) => {
+    const { user: nextUser } = await authApi.login(email, password, remember);
+    setUser(nextUser);
   }, []);
 
   const register = useCallback(async (email: string, password: string) => {
     return authApi.register(email, password);
   }, []);
 
-  const logout = useCallback(() => {
-    setSession(null);
-    writeSession(null);
+  const logout = useCallback(async () => {
+    try {
+      await authApi.logout();
+    } finally {
+      setUser(null);
+    }
   }, []);
 
   const value = useMemo<AuthContextValue>(
     () => ({
-      user: session?.user ?? null,
-      accessToken: session?.tokens.access_token ?? null,
+      user,
       isHydrated,
-      isAuthenticated: Boolean(session?.tokens.access_token),
+      isAuthenticated: Boolean(user),
       login,
       register,
       logout,
     }),
-    [session, isHydrated, login, register, logout],
+    [user, isHydrated, login, register, logout],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

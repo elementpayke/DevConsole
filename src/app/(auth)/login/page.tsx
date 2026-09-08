@@ -49,7 +49,7 @@ export default function LoginPage() {
     setError(null);
     setLoading(true);
     try {
-      await login(email, password);
+      await login(email, password, remember);
       router.push("/dashboard");
     } catch (err) {
       const message =

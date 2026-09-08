@@ -69,8 +69,8 @@ export function Sidebar() {
   const { user, logout } = useAuth();
   const initial = (user?.email?.[0] ?? "?").toUpperCase();
 
-  function handleSignOut() {
-    logout();
+  async function handleSignOut() {
+    await logout();
     router.push("/login");
   }
 
