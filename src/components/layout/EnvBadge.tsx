@@ -3,9 +3,7 @@
 import { colors } from "@/lib/theme";
 import { useEnvironment } from "@/lib/env/EnvContext";
 
-/** Sandbox/Live indicator. Display-only: the aggregator API doesn't scope
- * dashboard/order queries by environment, so this reflects each API key's
- * own `environment` field rather than switching backends. */
+/** Sandbox/Live badge from NEXT_PUBLIC_ENVIRONMENT (per-deployment). */
 export function EnvBadge({ dark = false }: { dark?: boolean }) {
   const { environment } = useEnvironment();
   const palette = environment === "sandbox" ? colors.sandbox : colors.live;

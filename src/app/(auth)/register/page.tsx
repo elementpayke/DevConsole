@@ -39,7 +39,7 @@ export default function RegisterPage() {
     <div>
       <h1 className="mb-1.5 text-2xl font-extrabold tracking-tight">Create your account</h1>
       <p className="mb-7 text-[13.5px] text-muted">
-        Start in sandbox — no KYC required until you go live.
+        Create an account to manage API keys and transactions.
       </p>
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">

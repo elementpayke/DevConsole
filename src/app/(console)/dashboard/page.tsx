@@ -5,29 +5,25 @@ import { Header } from "@/components/layout/Header";
 import { StatCard } from "@/components/dashboard/StatCard";
 import { FiatBreakdown } from "@/components/dashboard/FiatBreakdown";
 import { CryptoBreakdownTable } from "@/components/dashboard/CryptoBreakdownTable";
-import { GoLiveTracker } from "@/components/dashboard/GoLiveTracker";
 import { QuickActions } from "@/components/dashboard/QuickActions";
 import { useAuth } from "@/lib/auth/AuthContext";
 import { getDashboardStats } from "@/lib/api/dashboard";
-import { listApiKeys } from "@/lib/api/apiKeys";
 import { ApiError } from "@/lib/api/client";
-import type { ApiKeyInfo, DashboardStats } from "@/lib/types";
+import type { DashboardStats } from "@/lib/types";
 
 export default function DashboardPage() {
   const { isAuthenticated, user } = useAuth();
   const [stats, setStats] = useState<DashboardStats | null>(null);
-  const [apiKeys, setApiKeys] = useState<ApiKeyInfo[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!isAuthenticated) return;
     let cancelled = false;
-    Promise.all([getDashboardStats(), listApiKeys()])
-      .then(([dashboard, keys]) => {
+    getDashboardStats()
+      .then((dashboard) => {
         if (cancelled) return;
         setStats(dashboard);
-        setApiKeys(keys);
         setError(null);
       })
       .catch((err) => {
@@ -41,33 +37,6 @@ export default function DashboardPage() {
   }, [isAuthenticated]);
 
   const firstName = user?.email?.split("@")[0] ?? "there";
-  const hasApiKey = apiKeys.length > 0;
-  const hasSandboxOrder = (stats?.summary.total_transactions ?? 0) > 0;
-  const kycVerified = user?.kyc_verified ?? false;
-  const hasLiveKey = apiKeys.some((k) => k.environment === "live");
-
-  const steps = [
-    {
-      label: "API keys created",
-      sub: "Sandbox",
-      state: hasApiKey ? ("done" as const) : ("active" as const),
-    },
-    {
-      label: "Sandbox order",
-      sub: hasSandboxOrder ? "Completed" : "Not started",
-      state: hasSandboxOrder ? ("done" as const) : hasApiKey ? ("active" as const) : ("pending" as const),
-    },
-    {
-      label: "Go-live checklist",
-      sub: "KYC verification",
-      state: kycVerified ? ("done" as const) : hasSandboxOrder ? ("active" as const) : ("pending" as const),
-    },
-    {
-      label: "Confirm live order",
-      sub: "Production",
-      state: hasLiveKey ? ("done" as const) : kycVerified ? ("active" as const) : ("pending" as const),
-    },
-  ];
 
   return (
     <>
@@ -103,7 +72,6 @@ export default function DashboardPage() {
               <CryptoBreakdownTable breakdown={stats.crypto_breakdown} />
             </div>
 
-            <GoLiveTracker steps={steps} />
             <QuickActions />
           </>
         ) : null}

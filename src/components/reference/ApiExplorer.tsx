@@ -4,8 +4,10 @@ import { useState } from "react";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { Button } from "@/components/ui/Button";
 import { colors } from "@/lib/theme";
+import { useEnvironment, type Environment } from "@/lib/env/EnvContext";
 
-const ENDPOINTS = [
+function endpointsFor(env: Environment) {
+  return [
   {
     id: "create-order",
     method: "POST",
@@ -73,7 +75,7 @@ const ENDPOINTS = [
     method: "GET",
     path: "/meta/tokens",
     desc: "List supported tokens and chains for an environment.",
-    requestCode: `curl "https://<your-aggregator-host>/meta/tokens?env=sandbox"`,
+    requestCode: `curl "https://<your-aggregator-host>/meta/tokens?env=${env}"`,
     responseCode: `{
   "status": "success",
   "message": "Tokens fetched (1)",
@@ -96,11 +98,14 @@ const ENDPOINTS = [
 }`,
   },
 ];
+}
 
 export function ApiExplorer() {
-  const [activeId, setActiveId] = useState(ENDPOINTS[0].id);
+  const { environment } = useEnvironment();
+  const endpoints = endpointsFor(environment);
+  const [activeId, setActiveId] = useState(endpoints[0].id);
   const [copied, setCopied] = useState(false);
-  const active = ENDPOINTS.find((e) => e.id === activeId)!;
+  const active = endpoints.find((e) => e.id === activeId) ?? endpoints[0];
 
   async function handleCopy() {
     try {
@@ -115,7 +120,7 @@ export function ApiExplorer() {
   return (
     <div className="grid grid-cols-[260px_1fr] gap-5">
       <GlassCard className="h-fit p-2.5">
-        {ENDPOINTS.map((ep) => (
+        {endpoints.map((ep) => (
           <div
             key={ep.id}
             onClick={() => setActiveId(ep.id)}
