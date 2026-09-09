@@ -43,7 +43,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
             href="/register"
             className="inline-flex items-center gap-2 rounded-lg bg-primary px-3 py-2.5 text-[12.5px] font-bold whitespace-nowrap text-white hover:bg-primary-hover sm:px-4 sm:text-[13px]"
           >
-            Start in Sandbox
+            Get started
           </Link>
         </div>
       </header>
