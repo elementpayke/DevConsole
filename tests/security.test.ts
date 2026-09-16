@@ -130,8 +130,16 @@ describe("secret exposure guards", () => {
     const example = readFileSync(join(root, ".env.example"), "utf8");
     assert.match(example, /^FE_CLIENT_SECRET=/m);
     assert.match(example, /^AGGREGATOR_BASE_URL=/m);
+    assert.match(example, /^NEXT_PUBLIC_TURNSTILE_SITE_KEY=/m);
     assert.doesNotMatch(example, /^NEXT_PUBLIC_FE_CLIENT_SECRET=/m);
     assert.doesNotMatch(example, /^NEXT_PUBLIC_API_BASE_URL=/m);
+    assert.doesNotMatch(example, /^TURNSTILE_SECRET_KEY=/m);
+  });
+
+  it("login BFF forwards turnstile_token to aggregator", () => {
+    const login = readFileSync(join(root, "src/app/api/auth/login/route.ts"), "utf8");
+    assert.match(login, /turnstile_token/);
+    assert.match(login, /loginBody/);
   });
 });
 

@@ -5,7 +5,12 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth, ApiError } from "@/lib/auth/AuthContext";
 import { PasswordInput } from "@/components/auth/PasswordInput";
+import { TurnstileWidget } from "@/components/auth/TurnstileWidget";
 import { Button } from "@/components/ui/Button";
+import {
+  canSubmitWithTurnstile,
+  isTurnstileConfigured,
+} from "@/lib/turnstile";
 
 function MailIcon() {
   return (
@@ -43,15 +48,24 @@ export default function LoginPage() {
   const [remember, setRemember] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
+  const [turnstileKey, setTurnstileKey] = useState(0);
+  const turnstileRequired = isTurnstileConfigured();
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setError(null);
+    if (!canSubmitWithTurnstile(turnstileRequired, turnstileToken)) {
+      setError("Please complete the captcha check");
+      return;
+    }
     setLoading(true);
     try {
-      await login(email, password, remember);
+      await login(email, password, remember, turnstileToken);
       router.push("/dashboard");
     } catch (err) {
+      setTurnstileToken(null);
+      setTurnstileKey((k) => k + 1);
       const message =
         err instanceof ApiError ? err.message : "Something went wrong. Please try again.";
       if (isUnverifiedAccountError(message)) {
@@ -66,6 +80,9 @@ export default function LoginPage() {
       setLoading(false);
     }
   }
+
+  const canSubmit =
+    !loading && canSubmitWithTurnstile(turnstileRequired, turnstileToken);
 
   return (
     <div>
@@ -125,9 +142,15 @@ export default function LoginPage() {
           Remember me
         </label>
 
+        <TurnstileWidget
+          key={turnstileKey}
+          onToken={setTurnstileToken}
+          className="w-full"
+        />
+
         {error && <p className="text-[12.5px] font-medium text-[oklch(0.55_0.19_25)]">{error}</p>}
 
-        <Button type="submit" disabled={loading} className="w-full py-3.5 text-[14.5px]">
+        <Button type="submit" disabled={!canSubmit} className="w-full py-3.5 text-[14.5px]">
           {loading ? "Logging in…" : "Log in →"}
         </Button>
       </form>

@@ -5,7 +5,12 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth, ApiError } from "@/lib/auth/AuthContext";
 import { PasswordInput } from "@/components/auth/PasswordInput";
+import { TurnstileWidget } from "@/components/auth/TurnstileWidget";
 import { Button } from "@/components/ui/Button";
+import {
+  canSubmitWithTurnstile,
+  isTurnstileConfigured,
+} from "@/lib/turnstile";
 
 export default function RegisterPage() {
   const { register } = useAuth();
@@ -15,6 +20,9 @@ export default function RegisterPage() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
+  const [turnstileKey, setTurnstileKey] = useState(0);
+  const turnstileRequired = isTurnstileConfigured();
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -23,17 +31,26 @@ export default function RegisterPage() {
       setError("Passwords do not match.");
       return;
     }
+    if (!canSubmitWithTurnstile(turnstileRequired, turnstileToken)) {
+      setError("Please complete the captcha check");
+      return;
+    }
     setLoading(true);
     try {
       const email = businessEmail.trim();
-      await register(email, password);
+      await register(email, password, turnstileToken);
       router.push(`/verify-email?email=${encodeURIComponent(email)}`);
     } catch (err) {
+      setTurnstileToken(null);
+      setTurnstileKey((k) => k + 1);
       setError(err instanceof ApiError ? err.message : "Something went wrong. Please try again.");
     } finally {
       setLoading(false);
     }
   }
+
+  const canSubmit =
+    !loading && canSubmitWithTurnstile(turnstileRequired, turnstileToken);
 
   return (
     <div>
@@ -81,9 +98,15 @@ export default function RegisterPage() {
           />
         </div>
 
+        <TurnstileWidget
+          key={turnstileKey}
+          onToken={setTurnstileToken}
+          className="w-full"
+        />
+
         {error && <p className="text-[12.5px] font-medium text-[oklch(0.55_0.19_25)]">{error}</p>}
 
-        <Button type="submit" disabled={loading} className="mt-2 w-full py-3.5 text-[14.5px]">
+        <Button type="submit" disabled={!canSubmit} className="mt-2 w-full py-3.5 text-[14.5px]">
           {loading ? "Creating account…" : "Create account →"}
         </Button>
       </form>

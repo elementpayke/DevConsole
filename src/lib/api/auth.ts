@@ -1,19 +1,29 @@
 import { apiFetch } from "./client";
+import { withTurnstileToken } from "@/lib/turnstile";
 import type { User } from "@/lib/types";
 
-export function login(email: string, password: string, remember = true) {
+export function login(
+  email: string,
+  password: string,
+  remember = true,
+  turnstileToken?: string | null,
+) {
   return apiFetch<{ user: User | null }>("/auth/login", {
     method: "POST",
-    body: { email, password, remember },
+    body: withTurnstileToken({ email, password, remember }, turnstileToken),
     unwrap: false,
     absolutePath: "/api/auth/login",
   });
 }
 
-export function register(email: string, password: string) {
+export function register(
+  email: string,
+  password: string,
+  turnstileToken?: string | null,
+) {
   return apiFetch<User>("/auth/register", {
     method: "POST",
-    body: { email, password },
+    body: withTurnstileToken({ email, password }, turnstileToken),
     unwrap: false,
     absolutePath: "/api/auth/register",
   });

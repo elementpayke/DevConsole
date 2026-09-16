@@ -17,7 +17,12 @@ export async function POST(req: NextRequest) {
   const originBlock = assertTrustedOrigin(req);
   if (originBlock) return originBlock;
 
-  let body: { email?: string; password?: string; remember?: boolean };
+  let body: {
+    email?: string;
+    password?: string;
+    remember?: boolean;
+    turnstile_token?: string;
+  };
   try {
     body = await req.json();
   } catch {
@@ -30,11 +35,21 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ message: "Email and password are required" }, { status: 400 });
   }
 
+  const turnstile_token =
+    typeof body.turnstile_token === "string" ? body.turnstile_token.trim() : "";
+  const loginBody: { email: string; password: string; turnstile_token?: string } = {
+    email,
+    password,
+  };
+  if (turnstile_token) {
+    loginBody.turnstile_token = turnstile_token;
+  }
+
   let upstream: Response;
   try {
     upstream = await fetchAggregator("/auth/login", {
       method: "POST",
-      body: { email, password },
+      body: loginBody,
     });
   } catch (err) {
     if (err instanceof Error && err.message.includes("FE_CLIENT_SECRET")) {
