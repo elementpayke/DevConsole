@@ -16,8 +16,17 @@ type AuthContextValue = {
   user: User | null;
   isHydrated: boolean;
   isAuthenticated: boolean;
-  login: (email: string, password: string, remember?: boolean) => Promise<void>;
-  register: (email: string, password: string) => Promise<User>;
+  login: (
+    email: string,
+    password: string,
+    remember?: boolean,
+    turnstileToken?: string | null,
+  ) => Promise<void>;
+  register: (
+    email: string,
+    password: string,
+    turnstileToken?: string | null,
+  ) => Promise<User>;
   logout: () => Promise<void>;
 };
 
@@ -55,14 +64,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
   }, []);
 
-  const login = useCallback(async (email: string, password: string, remember = true) => {
-    const { user: nextUser } = await authApi.login(email, password, remember);
-    setUser(nextUser);
-  }, []);
+  const login = useCallback(
+    async (
+      email: string,
+      password: string,
+      remember = true,
+      turnstileToken?: string | null,
+    ) => {
+      const { user: nextUser } = await authApi.login(
+        email,
+        password,
+        remember,
+        turnstileToken,
+      );
+      setUser(nextUser);
+    },
+    [],
+  );
 
-  const register = useCallback(async (email: string, password: string) => {
-    return authApi.register(email, password);
-  }, []);
+  const register = useCallback(
+    async (email: string, password: string, turnstileToken?: string | null) => {
+      return authApi.register(email, password, turnstileToken);
+    },
+    [],
+  );
 
   const logout = useCallback(async () => {
     try {
