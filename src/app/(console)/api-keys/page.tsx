@@ -21,6 +21,7 @@ export default function ApiKeysPage() {
   const [creating, setCreating] = useState(false);
   const [revealed, setRevealed] = useState<ApiKeyCreated | null>(null);
   const [editing, setEditing] = useState<ApiKeyInfo | null>(null);
+  const [busyKeyId, setBusyKeyId] = useState<number | null>(null);
 
   const refresh = useCallback(async () => {
     if (!isAuthenticated) return;
@@ -77,6 +78,32 @@ export default function ApiKeysPage() {
     refresh();
   }
 
+  async function handleToggleSms(key: ApiKeyInfo, next: boolean) {
+    if (!isAuthenticated || key.revoked || busyKeyId === key.id) return;
+    setBusyKeyId(key.id);
+    try {
+      await apiKeysApi.updateApiKeySms(key.id, next);
+      await refresh();
+    } catch (err) {
+      alert(err instanceof ApiError ? err.message : "Failed to update SMS notifications.");
+    } finally {
+      setBusyKeyId(null);
+    }
+  }
+
+  async function handleToggleSignedOrders(key: ApiKeyInfo, next: boolean) {
+    if (!isAuthenticated || key.revoked || busyKeyId === key.id) return;
+    setBusyKeyId(key.id);
+    try {
+      await apiKeysApi.updateApiKeySignedOrders(key.id, next);
+      await refresh();
+    } catch (err) {
+      alert(err instanceof ApiError ? err.message : "Failed to update signed accepts.");
+    } finally {
+      setBusyKeyId(null);
+    }
+  }
+
   return (
     <>
       <Header title="API Keys" />
@@ -103,7 +130,14 @@ export default function ApiKeysPage() {
         {loading ? (
           <p className="text-sm text-muted">Loading keys…</p>
         ) : (
-          <ApiKeysTable keys={keys} onEditWebhook={setEditing} onRevoke={handleRevoke} />
+          <ApiKeysTable
+            keys={keys}
+            busyKeyId={busyKeyId}
+            onEditWebhook={setEditing}
+            onRevoke={handleRevoke}
+            onToggleSms={handleToggleSms}
+            onToggleSignedOrders={handleToggleSignedOrders}
+          />
         )}
       </div>
 

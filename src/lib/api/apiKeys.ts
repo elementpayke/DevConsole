@@ -25,3 +25,23 @@ export function updateApiKeyWebhook(
     query: { webhook_url, webhook_secret },
   });
 }
+
+export function updateApiKeySms(keyId: number, send_sms_notifications: boolean) {
+  return apiFetch<{ updated: boolean; key_id: number; send_sms_notifications: boolean }>(
+    `/users/me/api-keys/${keyId}/sms`,
+    {
+      method: "PATCH",
+      query: { send_sms_notifications },
+    },
+  );
+}
+
+export function updateApiKeySignedOrders(keyId: number, require_signed_orders: boolean) {
+  return apiFetch<{ updated: boolean; key_id: number; require_signed_orders: boolean }>(
+    `/users/me/api-keys/${keyId}/signed-orders`,
+    {
+      method: "PATCH",
+      query: { require_signed_orders },
+    },
+  );
+}
