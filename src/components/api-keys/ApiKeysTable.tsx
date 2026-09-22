@@ -20,19 +20,19 @@ function SettingToggle({
   checked,
   disabled,
   onChange,
-  helper,
+  info,
 }: {
   label: string;
   checked: boolean;
   disabled?: boolean;
   onChange: (next: boolean) => void;
-  helper?: string;
+  info?: string;
 }) {
   return (
-    <label
-      className={`flex flex-col gap-0.5 ${disabled ? "cursor-not-allowed opacity-50" : "cursor-pointer"}`}
-    >
-      <span className="flex items-center gap-2 text-[12.5px] text-muted">
+    <div className={`flex items-center gap-1.5 ${disabled ? "opacity-50" : ""}`}>
+      <label
+        className={`flex items-center gap-2 text-[12.5px] text-muted ${disabled ? "cursor-not-allowed" : "cursor-pointer"}`}
+      >
         <input
           type="checkbox"
           checked={checked}
@@ -41,9 +41,25 @@ function SettingToggle({
           className="accent-ink"
         />
         {label}
-      </span>
-      {helper && <span className="pl-5 text-[11px] leading-snug text-faint">{helper}</span>}
-    </label>
+      </label>
+      {info && (
+        <span className="group relative inline-flex">
+          <button
+            type="button"
+            aria-label={info}
+            className="inline-flex h-3.5 w-3.5 cursor-help items-center justify-center rounded-full border border-line-soft text-[9px] font-bold leading-none text-faint"
+          >
+            i
+          </button>
+          <span
+            role="tooltip"
+            className="pointer-events-none absolute bottom-full left-1/2 z-10 mb-1.5 w-max max-w-[220px] -translate-x-1/2 rounded-md border border-line-soft bg-white px-2 py-1.5 text-left text-[11px] leading-snug text-muted opacity-0 shadow-sm transition-opacity group-hover:opacity-100 group-focus-within:opacity-100"
+          >
+            {info}
+          </span>
+        </span>
+      )}
+    </div>
   );
 }
 
@@ -112,7 +128,7 @@ export function ApiKeysTable({
                   {key.has_webhook_config ? "Configured" : "Not set"}
                 </td>
                 <td className="border-t border-line-soft px-[18px] py-3.5">
-                  <div className="flex flex-col gap-2.5">
+                  <div className="flex flex-col gap-1.5">
                     <SettingToggle
                       label="SMS notifications"
                       checked={key.send_sms_notifications}
@@ -124,7 +140,7 @@ export function ApiKeysTable({
                       checked={key.require_signed_orders}
                       disabled={togglesDisabled}
                       onChange={(next) => onToggleSignedOrders(key, next)}
-                      helper="Requires customer EIP-712 signature on accept."
+                      info="Requires customer EIP-712 signature on accept."
                     />
                   </div>
                 </td>
