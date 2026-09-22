@@ -49,14 +49,14 @@ function SettingToggle({
 
 export function ApiKeysTable({
   keys,
-  busyKeyId,
+  busyKeyIds,
   onEditWebhook,
   onRevoke,
   onToggleSms,
   onToggleSignedOrders,
 }: {
   keys: ApiKeyInfo[];
-  busyKeyId?: number | null;
+  busyKeyIds?: ReadonlySet<number>;
   onEditWebhook: (key: ApiKeyInfo) => void;
   onRevoke: (key: ApiKeyInfo) => void;
   onToggleSms: (key: ApiKeyInfo, next: boolean) => void;
@@ -85,7 +85,7 @@ export function ApiKeysTable({
         <tbody>
           {keys.map((key) => {
             const envPalette = key.environment === "live" ? colors.success : colors.sandbox;
-            const rowBusy = busyKeyId === key.id;
+            const rowBusy = busyKeyIds?.has(key.id) ?? false;
             const togglesDisabled = key.revoked || rowBusy;
             return (
               <tr key={key.id} className={rowBusy ? "opacity-70" : undefined}>
