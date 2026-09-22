@@ -15,14 +15,52 @@ function relativeTime(iso: string | null) {
   return `${days} day${days === 1 ? "" : "s"} ago`;
 }
 
+function SettingToggle({
+  label,
+  checked,
+  disabled,
+  onChange,
+  helper,
+}: {
+  label: string;
+  checked: boolean;
+  disabled?: boolean;
+  onChange: (next: boolean) => void;
+  helper?: string;
+}) {
+  return (
+    <label
+      className={`flex flex-col gap-0.5 ${disabled ? "cursor-not-allowed opacity-50" : "cursor-pointer"}`}
+    >
+      <span className="flex items-center gap-2 text-[12.5px] text-muted">
+        <input
+          type="checkbox"
+          checked={checked}
+          disabled={disabled}
+          onChange={(e) => onChange(e.target.checked)}
+          className="accent-ink"
+        />
+        {label}
+      </span>
+      {helper && <span className="pl-5 text-[11px] leading-snug text-faint">{helper}</span>}
+    </label>
+  );
+}
+
 export function ApiKeysTable({
   keys,
+  busyKeyIds,
   onEditWebhook,
   onRevoke,
+  onToggleSms,
+  onToggleSignedOrders,
 }: {
   keys: ApiKeyInfo[];
+  busyKeyIds?: ReadonlySet<number>;
   onEditWebhook: (key: ApiKeyInfo) => void;
   onRevoke: (key: ApiKeyInfo) => void;
+  onToggleSms: (key: ApiKeyInfo, next: boolean) => void;
+  onToggleSignedOrders: (key: ApiKeyInfo, next: boolean) => void;
 }) {
   if (keys.length === 0) {
     return (
@@ -37,8 +75,8 @@ export function ApiKeysTable({
       <table className="w-full border-collapse">
         <thead>
           <tr style={{ background: "oklch(0.98 0.003 264)" }}>
-            {["Name", "Key", "Environment", "Last used", "Webhook", ""].map((h) => (
-              <th key={h} className="px-[18px] py-3 text-left text-[11.5px] font-bold text-faint">
+            {["Name", "Key", "Environment", "Last used", "Webhook", "Settings", ""].map((h) => (
+              <th key={h || "actions"} className="px-[18px] py-3 text-left text-[11.5px] font-bold text-faint">
                 {h}
               </th>
             ))}
@@ -47,8 +85,10 @@ export function ApiKeysTable({
         <tbody>
           {keys.map((key) => {
             const envPalette = key.environment === "live" ? colors.success : colors.sandbox;
+            const rowBusy = busyKeyIds?.has(key.id) ?? false;
+            const togglesDisabled = key.revoked || rowBusy;
             return (
-              <tr key={key.id}>
+              <tr key={key.id} className={rowBusy ? "opacity-70" : undefined}>
                 <td className="border-t border-line-soft px-[18px] py-3.5 text-[13.5px] font-bold">
                   {key.name}
                   {key.revoked && (
@@ -71,18 +111,37 @@ export function ApiKeysTable({
                 <td className="border-t border-line-soft px-[18px] py-3.5 text-[12.5px] text-muted">
                   {key.has_webhook_config ? "Configured" : "Not set"}
                 </td>
+                <td className="border-t border-line-soft px-[18px] py-3.5">
+                  <div className="flex flex-col gap-2.5">
+                    <SettingToggle
+                      label="SMS notifications"
+                      checked={key.send_sms_notifications}
+                      disabled={togglesDisabled}
+                      onChange={(next) => onToggleSms(key, next)}
+                    />
+                    <SettingToggle
+                      label="Signed accepts"
+                      checked={key.require_signed_orders}
+                      disabled={togglesDisabled}
+                      onChange={(next) => onToggleSignedOrders(key, next)}
+                      helper="Requires customer EIP-712 signature on accept."
+                    />
+                  </div>
+                </td>
                 <td className="border-t border-line-soft px-[18px] py-3.5 text-right whitespace-nowrap">
                   {!key.revoked && (
                     <>
                       <button
                         onClick={() => onEditWebhook(key)}
-                        className="mr-3.5 cursor-pointer text-[12.5px] font-bold text-ink"
+                        disabled={rowBusy}
+                        className="mr-3.5 cursor-pointer text-[12.5px] font-bold text-ink disabled:cursor-not-allowed disabled:opacity-50"
                       >
                         Edit webhook
                       </button>
                       <button
                         onClick={() => onRevoke(key)}
-                        className="cursor-pointer text-[12.5px] font-bold text-[oklch(0.55_0.19_25)]"
+                        disabled={rowBusy}
+                        className="cursor-pointer text-[12.5px] font-bold text-[oklch(0.55_0.19_25)] disabled:cursor-not-allowed disabled:opacity-50"
                       >
                         Revoke
                       </button>

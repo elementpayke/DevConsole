@@ -58,6 +58,7 @@ export type ApiKeyInfo = {
   webhook_url: string | null;
   has_webhook_config: boolean;
   send_sms_notifications: boolean;
+  require_signed_orders: boolean;
 };
 
 export type ApiKeyCreated = {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Header } from "@/components/layout/Header";
 import { Button } from "@/components/ui/Button";
 import { ApiKeysTable } from "@/components/api-keys/ApiKeysTable";
@@ -21,6 +21,20 @@ export default function ApiKeysPage() {
   const [creating, setCreating] = useState(false);
   const [revealed, setRevealed] = useState<ApiKeyCreated | null>(null);
   const [editing, setEditing] = useState<ApiKeyInfo | null>(null);
+  const busyKeyIdsRef = useRef(new Set<number>());
+  const [busyKeyIds, setBusyKeyIds] = useState<ReadonlySet<number>>(() => new Set());
+
+  function beginBusy(keyId: number): boolean {
+    if (busyKeyIdsRef.current.has(keyId)) return false;
+    busyKeyIdsRef.current.add(keyId);
+    setBusyKeyIds(new Set(busyKeyIdsRef.current));
+    return true;
+  }
+
+  function endBusy(keyId: number) {
+    if (!busyKeyIdsRef.current.delete(keyId)) return;
+    setBusyKeyIds(new Set(busyKeyIdsRef.current));
+  }
 
   const refresh = useCallback(async () => {
     if (!isAuthenticated) return;
@@ -77,6 +91,30 @@ export default function ApiKeysPage() {
     refresh();
   }
 
+  async function handleToggleSms(key: ApiKeyInfo, next: boolean) {
+    if (!isAuthenticated || key.revoked || !beginBusy(key.id)) return;
+    try {
+      await apiKeysApi.updateApiKeySms(key.id, next);
+      await refresh();
+    } catch (err) {
+      alert(err instanceof ApiError ? err.message : "Failed to update SMS notifications.");
+    } finally {
+      endBusy(key.id);
+    }
+  }
+
+  async function handleToggleSignedOrders(key: ApiKeyInfo, next: boolean) {
+    if (!isAuthenticated || key.revoked || !beginBusy(key.id)) return;
+    try {
+      await apiKeysApi.updateApiKeySignedOrders(key.id, next);
+      await refresh();
+    } catch (err) {
+      alert(err instanceof ApiError ? err.message : "Failed to update signed accepts.");
+    } finally {
+      endBusy(key.id);
+    }
+  }
+
   return (
     <>
       <Header title="API Keys" />
@@ -103,7 +141,14 @@ export default function ApiKeysPage() {
         {loading ? (
           <p className="text-sm text-muted">Loading keys…</p>
         ) : (
-          <ApiKeysTable keys={keys} onEditWebhook={setEditing} onRevoke={handleRevoke} />
+          <ApiKeysTable
+            keys={keys}
+            busyKeyIds={busyKeyIds}
+            onEditWebhook={setEditing}
+            onRevoke={handleRevoke}
+            onToggleSms={handleToggleSms}
+            onToggleSignedOrders={handleToggleSignedOrders}
+          />
         )}
       </div>
 
