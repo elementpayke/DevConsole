@@ -117,20 +117,28 @@ export default function OfframpPage() {
     setLoadingCatalog(true);
     setError(null);
     try {
-      const data = await getOfframpCatalog(country || undefined);
+      // Full OffRamp catalog (no country filter) so the dropdown lists every corridor.
+      const data = await getOfframpCatalog();
       setCatalog(data);
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Failed to load destinations.");
     } finally {
       setLoadingCatalog(false);
     }
-  }, [country]);
+  }, []);
 
   useEffect(() => {
     void loadCatalog();
   }, [loadCatalog]);
 
   const countries = useMemo(() => extractCountries(catalog), [catalog]);
+
+  useEffect(() => {
+    if (!countries.length) return;
+    if (!countries.includes(country)) {
+      setCountry(countries[0]!);
+    }
+  }, [countries, country]);
   const providers = useMemo(
     () => extractProviders(catalog, country, method),
     [catalog, country, method],
