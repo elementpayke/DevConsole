@@ -277,7 +277,10 @@ export default function OfframpPage() {
               <input
                 className="mt-1 w-full rounded-lg border border-line bg-white px-3 py-2 text-[13px] mono"
                 value={cryptoAmount}
-                onChange={(e) => setCryptoAmount(e.target.value)}
+                onChange={(e) => {
+                  setCryptoAmount(e.target.value);
+                  clearQuoteBoundFields(setQuote, setOrderId, setOrderStatus);
+                }}
                 inputMode="decimal"
               />
             </label>
