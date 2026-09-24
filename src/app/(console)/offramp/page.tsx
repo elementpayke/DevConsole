@@ -320,6 +320,7 @@ export default function OfframpPage() {
               className="mt-1 w-full rounded-lg border border-line bg-white px-3 py-2 text-[13px] mono"
               placeholder="0x…"
               value={refundAddress}
+              disabled={busy}
               onChange={(e) => {
                 setRefundAddress(e.target.value);
                 clearQuoteBoundFields(setQuote, setOrderId, setOrderStatus);
