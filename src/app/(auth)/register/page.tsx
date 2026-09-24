@@ -12,9 +12,12 @@ import {
   isTurnstileConfigured,
 } from "@/lib/turnstile";
 
+type AccountType = "merchant" | "developer";
+
 export default function RegisterPage() {
   const { register } = useAuth();
   const router = useRouter();
+  const [accountType, setAccountType] = useState<AccountType>("merchant");
   const [businessEmail, setBusinessEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -38,7 +41,7 @@ export default function RegisterPage() {
     setLoading(true);
     try {
       const email = businessEmail.trim();
-      await register(email, password, turnstileToken);
+      await register(email, password, turnstileToken, accountType);
       router.push(`/verify-email?email=${encodeURIComponent(email)}`);
     } catch (err) {
       setTurnstileToken(null);
@@ -56,10 +59,43 @@ export default function RegisterPage() {
     <div>
       <h1 className="mb-1.5 text-2xl font-extrabold tracking-tight">Create your account</h1>
       <p className="mb-7 text-[13.5px] text-muted">
-        Create an account to manage API keys and transactions.
+        Merchants collect and withdraw. Developers integrate with API keys.
       </p>
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+        <div>
+          <div className="mb-1.5 text-[12.5px] font-bold">Account type</div>
+          <div className="grid grid-cols-2 gap-2">
+            <button
+              type="button"
+              onClick={() => setAccountType("merchant")}
+              className={`rounded-lg border px-3 py-2.5 text-left text-[13px] ${
+                accountType === "merchant"
+                  ? "border-primary bg-white font-semibold"
+                  : "border-line-strong text-muted"
+              }`}
+            >
+              Merchant
+              <span className="mt-0.5 block text-[11px] font-normal text-faint">
+                Business KYB, Off-ramp, collections
+              </span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setAccountType("developer")}
+              className={`rounded-lg border px-3 py-2.5 text-left text-[13px] ${
+                accountType === "developer"
+                  ? "border-primary bg-white font-semibold"
+                  : "border-line-strong text-muted"
+              }`}
+            >
+              Developer
+              <span className="mt-0.5 block text-[11px] font-normal text-faint">
+                API keys and Partner integration
+              </span>
+            </button>
+          </div>
+        </div>
         <div>
           <div className="mb-1.5 text-[12.5px] font-bold">Work email</div>
           <input

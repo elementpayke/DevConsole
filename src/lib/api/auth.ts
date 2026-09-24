@@ -20,10 +20,14 @@ export function register(
   email: string,
   password: string,
   turnstileToken?: string | null,
+  role?: "developer" | "merchant" | "user",
 ) {
   return apiFetch<User>("/auth/register", {
     method: "POST",
-    body: withTurnstileToken({ email, password }, turnstileToken),
+    body: withTurnstileToken(
+      { email, password, ...(role ? { role } : {}) },
+      turnstileToken,
+    ),
     unwrap: false,
     absolutePath: "/api/auth/register",
   });
