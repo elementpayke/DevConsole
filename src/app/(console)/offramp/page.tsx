@@ -21,8 +21,7 @@ const DEFAULT_ASSET = {
   network: "BASE",
 } as const;
 
-const REFUND_ADDRESS = (process.env.NEXT_PUBLIC_OFFRAMP_REFUND_ADDRESS ?? "").trim();
-const REFUND_ADDRESS_VALID = /^0x[0-9a-fA-F]{40}$/.test(REFUND_ADDRESS);
+const EVM_ADDRESS_RE = /^0x[0-9a-fA-F]{40}$/;
 
 const COUNTRY_CURRENCY: Record<string, string> = {
   TZ: "TZS",
@@ -105,6 +104,7 @@ export default function OfframpPage() {
   const [phone, setPhone] = useState("");
   const [accountNumber, setAccountNumber] = useState("");
   const [accountName, setAccountName] = useState("");
+  const [refundAddress, setRefundAddress] = useState("");
   const [cryptoAmount, setCryptoAmount] = useState("20");
   const [quote, setQuote] = useState<OfframpQuote | null>(null);
   const [orderId, setOrderId] = useState<string | null>(null);
@@ -144,8 +144,9 @@ export default function OfframpPage() {
     setError(null);
     clearQuoteBoundFields(setQuote, setOrderId, setOrderStatus);
     try {
-      if (!REFUND_ADDRESS_VALID) {
-        throw new Error("Refund wallet is not configured. Contact ElementPay ops.");
+      const refund = refundAddress.trim();
+      if (!EVM_ADDRESS_RE.test(refund)) {
+        throw new Error("Enter the wallet you send from (0x… refund address).");
       }
       const amount = Number(cryptoAmount);
       if (!Number.isFinite(amount) || amount <= 0) {
@@ -171,7 +172,7 @@ export default function OfframpPage() {
         crypto_amount: amount,
         asset: { ...DEFAULT_ASSET },
         payment_method,
-        refund_address: REFUND_ADDRESS,
+        refund_address: refund,
       });
       setQuote(q);
     } catch (err) {
@@ -239,13 +240,6 @@ export default function OfframpPage() {
           Send funds to mobile money or bank. Linked customer:{" "}
           <span className="mono text-xs">{partnerCustomerId ?? "—"}</span>
         </p>
-
-        {!REFUND_ADDRESS_VALID && (
-          <p className="mb-4 rounded-lg border border-line-strong bg-white p-3 text-[13px] text-[oklch(0.55_0.19_25)]">
-            Refund wallet is not configured (`NEXT_PUBLIC_OFFRAMP_REFUND_ADDRESS`). Quotes
-            are disabled until ops sets a valid address.
-          </p>
-        )}
 
         {error && (
           <p className="mb-4 rounded-lg border border-line-strong bg-white p-3 text-[13px] text-[oklch(0.55_0.19_25)]">
@@ -320,6 +314,25 @@ export default function OfframpPage() {
             </select>
           </label>
 
+          <label className="block text-[12px] font-semibold text-faint">
+            Send / refund wallet (Base)
+            <input
+              className="mt-1 w-full rounded-lg border border-line bg-white px-3 py-2 text-[13px] mono"
+              placeholder="0x…"
+              value={refundAddress}
+              disabled={busy}
+              onChange={(e) => {
+                setRefundAddress(e.target.value);
+                clearQuoteBoundFields(setQuote, setOrderId, setOrderStatus);
+              }}
+              autoComplete="off"
+              spellCheck={false}
+            />
+            <span className="mt-1 block text-[11px] font-normal text-muted">
+              Use the wallet you send USDC from. Failed withdraws refund here.
+            </span>
+          </label>
+
           {method === "mobile_money" ? (
             <label className="block text-[12px] font-semibold text-faint">
               Phone (E.164)
@@ -360,10 +373,7 @@ export default function OfframpPage() {
             </div>
           )}
 
-          <Button
-            onClick={handleQuote}
-            disabled={busy || loadingCatalog || !REFUND_ADDRESS_VALID}
-          >
+          <Button onClick={handleQuote} disabled={busy || loadingCatalog}>
             {busy ? "Working…" : "Get quote"}
           </Button>
         </GlassCard>
