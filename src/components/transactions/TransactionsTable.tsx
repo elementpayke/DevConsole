@@ -15,27 +15,38 @@ function formatDate(iso: string) {
 export function TransactionsTable({
   orders,
   onSelect,
+  fiatFirst = false,
 }: {
   orders: Order[];
   onSelect: (order: Order) => void;
+  fiatFirst?: boolean;
 }) {
+  const headers = fiatFirst
+    ? ["Order", "Fiat amount", "Recipient", "Status", "Created"]
+    : ["Order", "Token", "Crypto amount", "Fiat amount", "Recipient", "Status", "Created"];
+
   return (
     <GlassCard className="overflow-x-auto">
-      <table className="w-full min-w-[920px] border-collapse">
+      <table
+        className={`w-full border-collapse ${fiatFirst ? "min-w-[720px]" : "min-w-[920px]"}`}
+      >
         <thead>
           <tr style={{ background: "oklch(0.98 0.003 264)" }}>
-            {["Order", "Token", "Crypto amount", "Fiat amount", "Recipient", "Status", "Created"].map(
-              (h, i) => (
+            {headers.map((h, i) => {
+              const rightAlign = fiatFirst
+                ? h === "Fiat amount"
+                : i === 2 || i === 3;
+              return (
                 <th
                   key={h}
                   className={`px-[18px] py-3 text-[11.5px] font-bold text-faint ${
-                    i === 2 || i === 3 ? "text-right" : "text-left"
+                    rightAlign ? "text-right" : "text-left"
                   }`}
                 >
                   {h}
                 </th>
-              ),
-            )}
+              );
+            })}
           </tr>
         </thead>
         <tbody>
@@ -50,12 +61,16 @@ export function TransactionsTable({
                 <td className="mono border-t border-line-soft px-[18px] py-3.5 text-[12.5px] font-semibold">
                   {order.order_id.slice(0, 10)}
                 </td>
-                <td className="border-t border-line-soft px-[18px] py-3.5 text-[13px] font-semibold">
-                  {order.token}
-                </td>
-                <td className="mono border-t border-line-soft px-[18px] py-3.5 text-right text-[12.5px]">
-                  {order.amount_crypto.toLocaleString()}
-                </td>
+                {!fiatFirst && (
+                  <>
+                    <td className="border-t border-line-soft px-[18px] py-3.5 text-[13px] font-semibold">
+                      {order.token}
+                    </td>
+                    <td className="mono border-t border-line-soft px-[18px] py-3.5 text-right text-[12.5px]">
+                      {order.amount_crypto.toLocaleString()}
+                    </td>
+                  </>
+                )}
                 <td className="mono border-t border-line-soft px-[18px] py-3.5 text-right text-[12.5px] font-bold">
                   {order.amount_fiat.toLocaleString()} {order.currency}
                 </td>

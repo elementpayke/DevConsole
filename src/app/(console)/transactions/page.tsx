@@ -13,6 +13,7 @@ import { TransactionsTable } from "@/components/transactions/TransactionsTable";
 import { TransactionDrawer } from "@/components/transactions/TransactionDrawer";
 import { ExportOrdersButtons } from "@/components/transactions/ExportOrdersButtons";
 import { useAuth } from "@/lib/auth/AuthContext";
+import { useMerchantExperience } from "@/lib/auth/useMerchantExperience";
 import { useEnvironment } from "@/lib/env/EnvContext";
 import { listMyOrders } from "@/lib/api/orders";
 import { ApiError } from "@/lib/api/client";
@@ -20,6 +21,7 @@ import type { Order } from "@/lib/types";
 
 export default function TransactionsPage() {
   const { isAuthenticated } = useAuth();
+  const { isMerchant } = useMerchantExperience();
   const { environment } = useEnvironment();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
@@ -62,7 +64,7 @@ export default function TransactionsPage() {
   const filtered = useMemo(() => {
     const search = filters.search.trim().toLowerCase();
     return orders.filter((o) => {
-      if (filters.token !== "all" && o.token !== filters.token) return false;
+      if (!isMerchant && filters.token !== "all" && o.token !== filters.token) return false;
       if (!orderInDateRange(o.created_at, dateRange)) return false;
       if (!search) return true;
       return (
@@ -70,7 +72,7 @@ export default function TransactionsPage() {
         (o.phone_number ?? "").toLowerCase().includes(search)
       );
     });
-  }, [orders, filters.search, filters.token, dateRange]);
+  }, [orders, filters.search, filters.token, dateRange, isMerchant]);
 
   return (
     <>
@@ -79,7 +81,12 @@ export default function TransactionsPage() {
         <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
           <h1 className="text-[22px] font-extrabold tracking-tight">Orders</h1>
           <div className="flex flex-wrap items-center gap-2.5">
-            <TransactionFilters filters={filters} onChange={setFilters} tokens={tokens} />
+            <TransactionFilters
+              filters={filters}
+              onChange={setFilters}
+              tokens={tokens}
+              fiatFirst={isMerchant}
+            />
             <ExportOrdersButtons
               orders={filtered}
               environment={environment}
@@ -98,11 +105,21 @@ export default function TransactionsPage() {
         {loading ? (
           <p className="text-sm text-muted">Loading orders…</p>
         ) : (
-          <TransactionsTable orders={filtered} onSelect={setSelected} />
+          <TransactionsTable
+            orders={filtered}
+            onSelect={setSelected}
+            fiatFirst={isMerchant}
+          />
         )}
       </div>
 
-      {selected && <TransactionDrawer order={selected} onClose={() => setSelected(null)} />}
+      {selected && (
+        <TransactionDrawer
+          order={selected}
+          onClose={() => setSelected(null)}
+          fiatFirst={isMerchant}
+        />
+      )}
     </>
   );
 }

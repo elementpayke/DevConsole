@@ -7,12 +7,14 @@ import { FiatBreakdown } from "@/components/dashboard/FiatBreakdown";
 import { CryptoBreakdownTable } from "@/components/dashboard/CryptoBreakdownTable";
 import { QuickActions } from "@/components/dashboard/QuickActions";
 import { useAuth } from "@/lib/auth/AuthContext";
+import { useMerchantExperience } from "@/lib/auth/useMerchantExperience";
 import { getDashboardStats } from "@/lib/api/dashboard";
 import { ApiError } from "@/lib/api/client";
 import type { DashboardStats } from "@/lib/types";
 
 export default function DashboardPage() {
   const { isAuthenticated, user } = useAuth();
+  const { isMerchant } = useMerchantExperience();
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -59,20 +61,26 @@ export default function DashboardPage() {
           <p className="text-sm text-muted">Loading dashboard…</p>
         ) : stats ? (
           <>
-            <div className="mb-6 grid grid-cols-5 gap-3.5">
+            <div
+              className={`mb-6 grid gap-3.5 ${isMerchant ? "grid-cols-4" : "grid-cols-5"}`}
+            >
               <StatCard label="Total transactions" value={stats.summary.total_transactions} />
               <StatCard label="Pending" value={stats.summary.pending_orders} />
               <StatCard label="Settled" value={stats.summary.settled_orders} />
               <StatCard label="Fiat currencies" value={stats.summary.total_currencies} />
-              <StatCard label="Crypto tokens" value={stats.summary.total_tokens} />
+              {!isMerchant && (
+                <StatCard label="Crypto tokens" value={stats.summary.total_tokens} />
+              )}
             </div>
 
-            <div className="mb-6 grid grid-cols-[1fr_1.4fr] gap-4">
+            <div
+              className={`mb-6 grid gap-4 ${isMerchant ? "grid-cols-1" : "grid-cols-[1fr_1.4fr]"}`}
+            >
               <FiatBreakdown breakdown={stats.fiat_breakdown} />
-              <CryptoBreakdownTable breakdown={stats.crypto_breakdown} />
+              {!isMerchant && <CryptoBreakdownTable breakdown={stats.crypto_breakdown} />}
             </div>
 
-            <QuickActions />
+            <QuickActions isMerchant={isMerchant} />
           </>
         ) : null}
       </div>

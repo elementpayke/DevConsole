@@ -95,10 +95,12 @@ export function TransactionFilters({
   filters,
   onChange,
   tokens,
+  fiatFirst = false,
 }: {
   filters: Filters;
   onChange: (filters: Filters) => void;
   tokens: string[];
+  fiatFirst?: boolean;
 }) {
   const selectClass =
     "rounded-lg border border-line-strong bg-white px-3.5 py-2.5 font-sans text-[13px]";
@@ -134,18 +136,20 @@ export function TransactionFilters({
         <option value="offramp">Off-ramp</option>
         <option value="onramp">On-ramp</option>
       </select>
-      <select
-        value={filters.token}
-        onChange={(e) => onChange({ ...filters, token: e.target.value })}
-        className={selectClass}
-      >
-        <option value="all">All tokens</option>
-        {tokens.map((t) => (
-          <option key={t} value={t}>
-            {t}
-          </option>
-        ))}
-      </select>
+      {!fiatFirst && (
+        <select
+          value={filters.token}
+          onChange={(e) => onChange({ ...filters, token: e.target.value })}
+          className={selectClass}
+        >
+          <option value="all">All tokens</option>
+          {tokens.map((t) => (
+            <option key={t} value={t}>
+              {t}
+            </option>
+          ))}
+        </select>
+      )}
       <select
         value={filters.period}
         onChange={(e) =>

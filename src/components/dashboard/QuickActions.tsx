@@ -2,17 +2,23 @@ import Link from "next/link";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { colors } from "@/lib/theme";
 
-const ACTIONS = [
+const DEVELOPER_ACTIONS = [
   { href: "/api-keys", title: "Manage API keys", desc: "Create and rotate integration keys" },
   { href: "/transactions", title: "View transactions", desc: "Track order status and settlement" },
 ];
 
-export function QuickActions() {
+const MERCHANT_ACTIONS = [
+  { href: "/transactions", title: "View transactions", desc: "Track collections and settlements" },
+  { href: "/offramp", title: "Withdraw", desc: "Off-ramp funds to momo or bank" },
+];
+
+export function QuickActions({ isMerchant = false }: { isMerchant?: boolean }) {
+  const actions = isMerchant ? MERCHANT_ACTIONS : DEVELOPER_ACTIONS;
   return (
     <GlassCard className="p-5">
       <div className="mb-3.5 text-[14.5px] font-bold">Quick actions</div>
       <div className="grid grid-cols-2 gap-3">
-        {ACTIONS.map((action) => (
+        {actions.map((action) => (
           <Link
             key={action.href}
             href={action.href}

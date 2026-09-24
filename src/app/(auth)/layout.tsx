@@ -28,7 +28,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
             <NavLink>Services</NavLink>
             <NavLink>Blog</NavLink>
             <NavLink>Documentation</NavLink>
-            <NavLink>API Console</NavLink>
+            <NavLink>Console</NavLink>
           </nav>
         </div>
         <div className="flex shrink-0 items-center gap-3 sm:gap-5">

@@ -88,7 +88,7 @@ export default function LoginPage() {
     <div>
       <h1 className="mb-1.5 text-2xl font-extrabold tracking-tight">Log in</h1>
       <p className="mb-7 text-[13.5px] text-muted">
-        Welcome back. Access your developer console and payout operations.
+        Welcome back. Access your ElementPay Console and payout operations.
       </p>
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
