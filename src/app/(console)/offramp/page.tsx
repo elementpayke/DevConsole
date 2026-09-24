@@ -15,19 +15,29 @@ import {
 import { ApiError } from "@/lib/api/client";
 
 const DEFAULT_ASSET = {
-  token: "0x833589fcd6edb6e08f4c7c32d4f71b54bdA02913",
+  // EIP-55 checksummed USDC on Base
+  token: "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
   currency: "USDC",
   network: "BASE",
 } as const;
 
-/** EP-managed refund wallet placeholder — replace via env when ops sets a real one. */
-const DEFAULT_REFUND =
-  process.env.NEXT_PUBLIC_OFFRAMP_REFUND_ADDRESS ||
-  "0x0000000000000000000000000000000000000001";
+const REFUND_ADDRESS = (process.env.NEXT_PUBLIC_OFFRAMP_REFUND_ADDRESS ?? "").trim();
+const REFUND_ADDRESS_VALID = /^0x[0-9a-fA-F]{40}$/.test(REFUND_ADDRESS);
+
+const COUNTRY_CURRENCY: Record<string, string> = {
+  TZ: "TZS",
+  KE: "KES",
+  UG: "UGX",
+};
 
 type Provider = { id: string; name?: string };
+type DestinationMethod = "mobile_money" | "bank";
 
-function extractProviders(catalog: unknown, country: string): Provider[] {
+function extractProviders(
+  catalog: unknown,
+  country: string,
+  method: DestinationMethod,
+): Provider[] {
   if (!catalog || typeof catalog !== "object") return [];
   const root = catalog as Record<string, unknown>;
   const data = (root.data ?? root) as Record<string, unknown>;
@@ -35,11 +45,9 @@ function extractProviders(catalog: unknown, country: string): Provider[] {
   const countries = (offramp.countries ?? {}) as Record<string, unknown>;
   const countryNode = (countries[country] ?? {}) as Record<string, unknown>;
   const methods = (countryNode.payment_methods ?? {}) as Record<string, unknown>;
-  const momo = (methods.mobile_money ?? {}) as Record<string, unknown>;
-  const bank = (methods.bank ?? {}) as Record<string, unknown>;
-  const momoProviders = Array.isArray(momo.providers) ? momo.providers : [];
-  const bankProviders = Array.isArray(bank.providers) ? bank.providers : [];
-  return [...momoProviders, ...bankProviders]
+  const node = (methods[method] ?? {}) as Record<string, unknown>;
+  const list = Array.isArray(node.providers) ? node.providers : [];
+  return list
     .map((p) => {
       const row = p as Record<string, unknown>;
       return {
@@ -59,11 +67,40 @@ function extractCountries(catalog: unknown): string[] {
   return Object.keys(countries).sort();
 }
 
+function currencyForCountry(catalog: unknown, country: string): string {
+  if (catalog && typeof catalog === "object") {
+    const root = catalog as Record<string, unknown>;
+    const data = (root.data ?? root) as Record<string, unknown>;
+    const offramp = (data.offramp ?? data) as Record<string, unknown>;
+    const countries = (offramp.countries ?? {}) as Record<string, unknown>;
+    const countryNode = (countries[country] ?? {}) as Record<string, unknown>;
+    const fromCatalog = countryNode.currency ?? countryNode.fiat_currency;
+    if (typeof fromCatalog === "string" && fromCatalog.trim()) {
+      return fromCatalog.trim().toUpperCase();
+    }
+  }
+  const mapped = COUNTRY_CURRENCY[country];
+  if (!mapped) {
+    throw new Error(`Unsupported country: ${country}`);
+  }
+  return mapped;
+}
+
+function clearQuoteBoundFields(
+  setQuote: (q: OfframpQuote | null) => void,
+  setOrderId: (id: string | null) => void,
+  setOrderStatus: (s: string | null) => void,
+) {
+  setQuote(null);
+  setOrderId(null);
+  setOrderStatus(null);
+}
+
 export default function OfframpPage() {
   const { isMerchant, partnerCustomerId } = useMerchantExperience();
   const [catalog, setCatalog] = useState<unknown>(null);
   const [country, setCountry] = useState("TZ");
-  const [method, setMethod] = useState<"mobile_money" | "bank">("mobile_money");
+  const [method, setMethod] = useState<DestinationMethod>("mobile_money");
   const [networkId, setNetworkId] = useState("");
   const [phone, setPhone] = useState("");
   const [accountNumber, setAccountNumber] = useState("");
@@ -95,46 +132,46 @@ export default function OfframpPage() {
 
   const countries = useMemo(() => extractCountries(catalog), [catalog]);
   const providers = useMemo(
-    () => extractProviders(catalog, country),
-    [catalog, country],
+    () => extractProviders(catalog, country, method),
+    [catalog, country, method],
   );
-
-  useEffect(() => {
-    if (providers.length && !providers.some((p) => p.id === networkId)) {
-      setNetworkId(providers[0]?.id ?? "");
-    }
-  }, [providers, networkId]);
+  const selectedNetworkId = providers.some((p) => p.id === networkId)
+    ? networkId
+    : (providers[0]?.id ?? "");
 
   async function handleQuote() {
     setBusy(true);
     setError(null);
-    setQuote(null);
+    clearQuoteBoundFields(setQuote, setOrderId, setOrderStatus);
     try {
+      if (!REFUND_ADDRESS_VALID) {
+        throw new Error("Refund wallet is not configured. Contact ElementPay ops.");
+      }
       const amount = Number(cryptoAmount);
       if (!Number.isFinite(amount) || amount <= 0) {
         throw new Error("Enter a valid amount.");
       }
-      if (!networkId) throw new Error("Select a destination network.");
+      if (!selectedNetworkId) throw new Error("Select a destination network.");
       const payment_method =
         method === "mobile_money"
           ? {
               type: "mobile_money" as const,
               phone_number: phone.trim(),
-              network_id: networkId,
+              network_id: selectedNetworkId,
             }
           : {
               type: "bank" as const,
               account_number: accountNumber.trim(),
               account_name: accountName.trim(),
-              network_id: networkId,
+              network_id: selectedNetworkId,
             };
       const q = await createOfframpQuote({
-        currency: country === "TZ" ? "TZS" : country === "KE" ? "KES" : "UGX",
+        currency: currencyForCountry(catalog, country),
         country,
         crypto_amount: amount,
         asset: { ...DEFAULT_ASSET },
         payment_method,
-        refund_address: DEFAULT_REFUND,
+        refund_address: REFUND_ADDRESS,
       });
       setQuote(q);
     } catch (err) {
@@ -203,6 +240,13 @@ export default function OfframpPage() {
           <span className="mono text-xs">{partnerCustomerId ?? "—"}</span>
         </p>
 
+        {!REFUND_ADDRESS_VALID && (
+          <p className="mb-4 rounded-lg border border-line-strong bg-white p-3 text-[13px] text-[oklch(0.55_0.19_25)]">
+            Refund wallet is not configured (`NEXT_PUBLIC_OFFRAMP_REFUND_ADDRESS`). Quotes
+            are disabled until ops sets a valid address.
+          </p>
+        )}
+
         {error && (
           <p className="mb-4 rounded-lg border border-line-strong bg-white p-3 text-[13px] text-[oklch(0.55_0.19_25)]">
             {error}
@@ -216,7 +260,10 @@ export default function OfframpPage() {
               <select
                 className="mt-1 w-full rounded-lg border border-line bg-white px-3 py-2 text-[13px]"
                 value={country}
-                onChange={(e) => setCountry(e.target.value)}
+                onChange={(e) => {
+                  setCountry(e.target.value);
+                  clearQuoteBoundFields(setQuote, setOrderId, setOrderStatus);
+                }}
               >
                 {(countries.length ? countries : ["TZ", "KE", "UG"]).map((c) => (
                   <option key={c} value={c}>
@@ -241,7 +288,10 @@ export default function OfframpPage() {
             <select
               className="mt-1 w-full rounded-lg border border-line bg-white px-3 py-2 text-[13px]"
               value={method}
-              onChange={(e) => setMethod(e.target.value as "mobile_money" | "bank")}
+              onChange={(e) => {
+                setMethod(e.target.value as DestinationMethod);
+                clearQuoteBoundFields(setQuote, setOrderId, setOrderStatus);
+              }}
             >
               <option value="mobile_money">Mobile money</option>
               <option value="bank">Bank</option>
@@ -252,8 +302,11 @@ export default function OfframpPage() {
             Provider
             <select
               className="mt-1 w-full rounded-lg border border-line bg-white px-3 py-2 text-[13px]"
-              value={networkId}
-              onChange={(e) => setNetworkId(e.target.value)}
+              value={selectedNetworkId}
+              onChange={(e) => {
+                setNetworkId(e.target.value);
+                clearQuoteBoundFields(setQuote, setOrderId, setOrderStatus);
+              }}
               disabled={loadingCatalog}
             >
               {providers.map((p) => (
@@ -271,7 +324,10 @@ export default function OfframpPage() {
                 className="mt-1 w-full rounded-lg border border-line bg-white px-3 py-2 text-[13px] mono"
                 placeholder="+255…"
                 value={phone}
-                onChange={(e) => setPhone(e.target.value)}
+                onChange={(e) => {
+                  setPhone(e.target.value);
+                  clearQuoteBoundFields(setQuote, setOrderId, setOrderStatus);
+                }}
               />
             </label>
           ) : (
@@ -281,7 +337,10 @@ export default function OfframpPage() {
                 <input
                   className="mt-1 w-full rounded-lg border border-line bg-white px-3 py-2 text-[13px] mono"
                   value={accountNumber}
-                  onChange={(e) => setAccountNumber(e.target.value)}
+                  onChange={(e) => {
+                    setAccountNumber(e.target.value);
+                    clearQuoteBoundFields(setQuote, setOrderId, setOrderStatus);
+                  }}
                 />
               </label>
               <label className="block text-[12px] font-semibold text-faint">
@@ -289,13 +348,19 @@ export default function OfframpPage() {
                 <input
                   className="mt-1 w-full rounded-lg border border-line bg-white px-3 py-2 text-[13px]"
                   value={accountName}
-                  onChange={(e) => setAccountName(e.target.value)}
+                  onChange={(e) => {
+                    setAccountName(e.target.value);
+                    clearQuoteBoundFields(setQuote, setOrderId, setOrderStatus);
+                  }}
                 />
               </label>
             </div>
           )}
 
-          <Button onClick={handleQuote} disabled={busy || loadingCatalog}>
+          <Button
+            onClick={handleQuote}
+            disabled={busy || loadingCatalog || !REFUND_ADDRESS_VALID}
+          >
             {busy ? "Working…" : "Get quote"}
           </Button>
         </GlassCard>
