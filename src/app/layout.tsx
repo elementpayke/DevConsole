@@ -17,8 +17,8 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "ElementPay Developer Console",
-  description: "Manage API keys, transactions, and integration reference for ElementPay.",
+  title: "ElementPay Console",
+  description: "Manage transactions, Off-ramp, and integrations for ElementPay.",
 };
 
 export default function RootLayout({

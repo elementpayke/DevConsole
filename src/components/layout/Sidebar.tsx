@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth/AuthContext";
+import { useMerchantExperience } from "@/lib/auth/useMerchantExperience";
 
 function SignOutIcon() {
   return (
@@ -19,6 +20,8 @@ const NAV_ITEMS = [
   {
     href: "/dashboard",
     label: "Overview",
+    merchant: true,
+    developer: true,
     icon: (active: boolean) => (
       <div className="grid h-3.5 w-3.5 grid-cols-2 gap-0.5">
         {Array.from({ length: 4 }).map((_, i) => (
@@ -34,6 +37,8 @@ const NAV_ITEMS = [
   {
     href: "/api-keys",
     label: "API Keys",
+    merchant: false,
+    developer: true,
     icon: (active: boolean) => (
       <div
         className="h-3.5 w-3.5 rounded-full border-2"
@@ -44,6 +49,8 @@ const NAV_ITEMS = [
   {
     href: "/transactions",
     label: "Transactions",
+    merchant: true,
+    developer: true,
     icon: (active: boolean) => (
       <div
         className="h-3 w-3 rotate-45"
@@ -52,8 +59,27 @@ const NAV_ITEMS = [
     ),
   },
   {
+    href: "/offramp",
+    label: "Off-ramp",
+    merchant: true,
+    developer: true,
+    icon: (active: boolean) => (
+      <div
+        className="relative h-3.5 w-3.5 rounded-full border-2"
+        style={{ borderColor: active ? "#fff" : "oklch(0.55 0.012 264)" }}
+      >
+        <div
+          className="absolute top-[2.5px] left-[2.5px] h-[5px] w-[5px] rounded-full"
+          style={{ background: active ? "#fff" : "oklch(0.55 0.012 264)" }}
+        />
+      </div>
+    ),
+  },
+  {
     href: "/reference",
     label: "Reference",
+    merchant: false,
+    developer: true,
     icon: (active: boolean) => (
       <div
         className="h-3.5 w-3.5 rounded-[3px] border-2"
@@ -67,12 +93,15 @@ export function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
   const { user, logout } = useAuth();
+  const { isMerchant } = useMerchantExperience();
   const initial = (user?.email?.[0] ?? "?").toUpperCase();
 
   async function handleSignOut() {
     await logout();
     router.push("/login");
   }
+
+  const items = NAV_ITEMS.filter((item) => (isMerchant ? item.merchant : item.developer));
 
   return (
     <div
@@ -88,7 +117,7 @@ export function Sidebar() {
       </div>
 
       <div className="flex flex-1 flex-col gap-0.5 p-3">
-        {NAV_ITEMS.map((item) => {
+        {items.map((item) => {
           const active = pathname.startsWith(item.href);
           return (
             <Link
@@ -106,20 +135,6 @@ export function Sidebar() {
             </Link>
           );
         })}
-
-        <div
-          className="mt-0.5 flex cursor-not-allowed items-center gap-3 rounded-lg px-3 py-2.5 text-[13.5px] font-semibold opacity-50"
-          style={{ color: "oklch(0.55 0.012 264)" }}
-          title="Coming soon"
-        >
-          <div className="relative h-3.5 w-3.5 rounded-full border-2" style={{ borderColor: "oklch(0.55 0.012 264)" }}>
-            <div
-              className="absolute top-[2.5px] left-[2.5px] h-[5px] w-[5px] rounded-full"
-              style={{ background: "oklch(0.55 0.012 264)" }}
-            />
-          </div>
-          Off-ramp
-        </div>
       </div>
 
       <div

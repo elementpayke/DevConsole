@@ -9,7 +9,7 @@ import type { Order } from "@/lib/types";
 
 type TimelineStep = { label: string; time: string; dotColor: string };
 
-function buildTimeline(order: Order): TimelineStep[] {
+function buildTimeline(order: Order, fiatFirst: boolean): TimelineStep[] {
   const created = new Date(order.created_at).toLocaleString(undefined, {
     month: "short",
     day: "numeric",
@@ -18,7 +18,7 @@ function buildTimeline(order: Order): TimelineStep[] {
   });
   const steps: TimelineStep[] = [{ label: "Order created", time: created, dotColor: colors.faint }];
 
-  if (order.creation_transaction_hash) {
+  if (!fiatFirst && order.creation_transaction_hash) {
     steps.push({
       label: "Crypto received on-chain",
       time: created,
@@ -37,10 +37,18 @@ function buildTimeline(order: Order): TimelineStep[] {
   return steps;
 }
 
-export function TransactionDrawer({ order, onClose }: { order: Order; onClose: () => void }) {
+export function TransactionDrawer({
+  order,
+  onClose,
+  fiatFirst = false,
+}: {
+  order: Order;
+  onClose: () => void;
+  fiatFirst?: boolean;
+}) {
   const style = statusStyle(order.status);
-  const timeline = buildTimeline(order);
-  const [includeCrypto, setIncludeCrypto] = useState(true);
+  const timeline = buildTimeline(order, fiatFirst);
+  const [includeCrypto, setIncludeCrypto] = useState(!fiatFirst);
 
   return (
     <>
@@ -65,7 +73,11 @@ export function TransactionDrawer({ order, onClose }: { order: Order; onClose: (
           </div>
 
           <div className="mb-5 grid grid-cols-2 gap-4">
-            <Field label="Token" value={order.token} />
+            {fiatFirst ? (
+              <Field label="Currency" value={order.currency} />
+            ) : (
+              <Field label="Token" value={order.token} />
+            )}
             <Field
               label="Created"
               value={new Date(order.created_at).toLocaleString(undefined, {
@@ -78,8 +90,14 @@ export function TransactionDrawer({ order, onClose }: { order: Order; onClose: (
           </div>
 
           <div className="mb-5 rounded-[10px] border border-line px-[18px] py-4">
-            <Row label="Crypto amount" value={order.amount_crypto.toLocaleString()} />
-            <Row label="Fiat amount" value={`${order.amount_fiat.toLocaleString()} ${order.currency}`} />
+            <Row
+              label="Fiat amount"
+              value={`${order.amount_fiat.toLocaleString()} ${order.currency}`}
+              last={fiatFirst && order.fee_charged == null}
+            />
+            {!fiatFirst && (
+              <Row label="Crypto amount" value={order.amount_crypto.toLocaleString()} />
+            )}
             {order.fee_charged != null && (
               <Row label="Fee charged" value={order.fee_charged.toLocaleString()} last />
             )}
@@ -94,7 +112,7 @@ export function TransactionDrawer({ order, onClose }: { order: Order; onClose: (
             </div>
           )}
 
-          {order.settlement_transaction_hash && (
+          {!fiatFirst && order.settlement_transaction_hash && (
             <div className="mb-5">
               <div className="mb-1 text-[11px] font-bold tracking-wide text-faint uppercase">
                 Settlement tx hash
@@ -109,35 +127,37 @@ export function TransactionDrawer({ order, onClose }: { order: Order; onClose: (
             <div className="mb-2 text-[11px] font-bold tracking-wide text-faint uppercase">
               Receipt format
             </div>
-            <div className="mb-2.5 grid grid-cols-2 gap-1.5 rounded-lg border border-line-strong bg-surface p-1">
-              <button
-                type="button"
-                onClick={() => setIncludeCrypto(false)}
-                className={`cursor-pointer rounded-md px-2.5 py-2 text-[12.5px] font-bold transition-colors ${
-                  !includeCrypto
-                    ? "bg-white text-ink shadow-sm"
-                    : "bg-transparent text-muted hover:text-ink"
-                }`}
-              >
-                Fiat only
-              </button>
-              <button
-                type="button"
-                onClick={() => setIncludeCrypto(true)}
-                className={`cursor-pointer rounded-md px-2.5 py-2 text-[12.5px] font-bold transition-colors ${
-                  includeCrypto
-                    ? "bg-white text-ink shadow-sm"
-                    : "bg-transparent text-muted hover:text-ink"
-                }`}
-              >
-                With crypto
-              </button>
-            </div>
+            {!fiatFirst && (
+              <div className="mb-2.5 grid grid-cols-2 gap-1.5 rounded-lg border border-line-strong bg-surface p-1">
+                <button
+                  type="button"
+                  onClick={() => setIncludeCrypto(false)}
+                  className={`cursor-pointer rounded-md px-2.5 py-2 text-[12.5px] font-bold transition-colors ${
+                    !includeCrypto
+                      ? "bg-white text-ink shadow-sm"
+                      : "bg-transparent text-muted hover:text-ink"
+                  }`}
+                >
+                  Fiat only
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setIncludeCrypto(true)}
+                  className={`cursor-pointer rounded-md px-2.5 py-2 text-[12.5px] font-bold transition-colors ${
+                    includeCrypto
+                      ? "bg-white text-ink shadow-sm"
+                      : "bg-transparent text-muted hover:text-ink"
+                  }`}
+                >
+                  With crypto
+                </button>
+              </div>
+            )}
             <Button
               type="button"
               variant="secondary"
               className="w-full"
-              onClick={() => downloadOrderReceipt(order, { includeCrypto })}
+              onClick={() => downloadOrderReceipt(order, { includeCrypto: fiatFirst ? false : includeCrypto })}
             >
               Download receipt PDF
             </Button>

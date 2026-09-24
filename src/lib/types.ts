@@ -4,7 +4,7 @@ export type ApiEnvelope<T> = {
   data: T;
 };
 
-export type UserRole = "user" | "admin" | "internal" | "developer";
+export type UserRole = "user" | "admin" | "internal" | "developer" | "merchant";
 
 export type User = {
   id: number;
@@ -12,6 +12,7 @@ export type User = {
   role: UserRole;
   is_active: boolean;
   kyc_verified: boolean;
+  partner_customer_id?: string | null;
   created_at: string;
   updated_at?: string | null;
 };
