@@ -26,6 +26,7 @@ type AuthContextValue = {
     email: string,
     password: string,
     turnstileToken?: string | null,
+    role?: "developer" | "merchant" | "user",
   ) => Promise<User>;
   logout: () => Promise<void>;
 };
@@ -83,8 +84,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   );
 
   const register = useCallback(
-    async (email: string, password: string, turnstileToken?: string | null) => {
-      return authApi.register(email, password, turnstileToken);
+    async (
+      email: string,
+      password: string,
+      turnstileToken?: string | null,
+      role?: "developer" | "merchant" | "user",
+    ) => {
+      return authApi.register(email, password, turnstileToken, role);
     },
     [],
   );
