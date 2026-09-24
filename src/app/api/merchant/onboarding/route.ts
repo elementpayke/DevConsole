@@ -105,7 +105,7 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const ref = `merchant_${user.id}_${Date.now().toString(36)}`;
+  const ref = `merchant_${user.id}`;
   const createRes = await partnerPost("customers", {
     partner_customer_ref: ref,
     type: "business",
@@ -128,11 +128,10 @@ export async function POST(req: NextRequest) {
     const message =
       (createJson &&
         typeof createJson === "object" &&
-        ((createJson as { message?: string }).message ||
-          (createJson as { detail?: string }).detail)) ||
+        (createJson as { message?: string }).message) ||
       "Failed to create vault customer";
     return NextResponse.json(
-      { message: String(message), data: createJson },
+      { message: String(message) },
       { status: createRes.status >= 400 ? createRes.status : 502 },
     );
   }
