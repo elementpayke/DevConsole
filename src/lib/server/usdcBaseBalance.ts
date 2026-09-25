@@ -31,12 +31,18 @@ export async function fetchUsdcBalanceOnBase(
         ],
       }),
       cache: "no-store",
+      signal: AbortSignal.timeout(5_000),
     });
   } catch {
     return null;
   }
   if (!res.ok) return null;
-  const json = (await res.json()) as { result?: string; error?: unknown };
+  let json: { result?: string; error?: unknown };
+  try {
+    json = (await res.json()) as { result?: string; error?: unknown };
+  } catch {
+    return null;
+  }
   if (!json.result || typeof json.result !== "string") return null;
   try {
     const raw = BigInt(json.result);

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { Header } from "@/components/layout/Header";
 import { GlassCard } from "@/components/ui/GlassCard";
@@ -56,7 +56,10 @@ function formatUsdcBalance(value: number | null | undefined): string {
 export default function OfframpPage() {
   const { isMerchant } = useMerchantExperience();
   const [corridors, setCorridors] = useState<OfframpCorridor[]>([]);
-  const [catalog, setCatalog] = useState<unknown>(null);
+  const [catalogState, setCatalogState] = useState<{
+    country: string;
+    data: unknown;
+  } | null>(null);
   const [country, setCountry] = useState("TZ");
   const [method, setMethod] = useState<DestinationMethod>("mobile_money");
   const [networkId, setNetworkId] = useState("");
@@ -71,7 +74,6 @@ export default function OfframpPage() {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [loadingCorridors, setLoadingCorridors] = useState(true);
-  const [loadingCatalog, setLoadingCatalog] = useState(true);
   const [balanceUsdc, setBalanceUsdc] = useState<number | null | undefined>(
     undefined,
   );
@@ -83,11 +85,15 @@ export default function OfframpPage() {
     null,
   );
 
+  const paymentAccountReq = useRef(0);
+
   const loadPaymentAccount = useCallback(() => {
+    const reqId = ++paymentAccountReq.current;
     setLoadingPaymentAccount(true);
     setPaymentAccountError(null);
     return getMerchantPaymentAccountBalance()
       .then((data) => {
+        if (reqId !== paymentAccountReq.current) return;
         setBalanceUsdc(data.balance_usdc);
         setBalanceStatus(data.balance_status ?? (data.has_account ? "ok" : "no_account"));
         if (data.has_account && data.address) {
@@ -97,6 +103,7 @@ export default function OfframpPage() {
         }
       })
       .catch((err) => {
+        if (reqId !== paymentAccountReq.current) return;
         setBalanceUsdc(null);
         setBalanceStatus("load_failed");
         setRefundAddress("");
@@ -107,6 +114,7 @@ export default function OfframpPage() {
         );
       })
       .finally(() => {
+        if (reqId !== paymentAccountReq.current) return;
         setLoadingPaymentAccount(false);
       });
   }, []);
@@ -114,8 +122,6 @@ export default function OfframpPage() {
   useEffect(() => {
     if (!isMerchant) return;
     let cancelled = false;
-    setLoadingCorridors(true);
-    setError(null);
     getOfframpCorridors()
       .then((data) => {
         if (cancelled) return;
@@ -147,10 +153,11 @@ export default function OfframpPage() {
   useEffect(() => {
     if (!isMerchant || !country) return;
     let cancelled = false;
-    setLoadingCatalog(true);
     getOfframpCatalog(country)
       .then((data) => {
-        if (!cancelled) setCatalog(data);
+        if (!cancelled) {
+          setCatalogState({ country, data });
+        }
       })
       .catch((err) => {
         if (!cancelled) {
@@ -158,9 +165,6 @@ export default function OfframpPage() {
             err instanceof ApiError ? err.message : "Failed to load providers.",
           );
         }
-      })
-      .finally(() => {
-        if (!cancelled) setLoadingCatalog(false);
       });
     return () => {
       cancelled = true;
@@ -169,8 +173,13 @@ export default function OfframpPage() {
 
   useEffect(() => {
     if (!isMerchant) return;
-    void loadPaymentAccount();
+    queueMicrotask(() => {
+      void loadPaymentAccount();
+    });
   }, [isMerchant, loadPaymentAccount]);
+
+  const catalog =
+    catalogState?.country === country ? catalogState.data : null;
 
   const corridorCurrency = useMemo(() => {
     const row = corridors.find((c) => c.country === country);
@@ -289,6 +298,8 @@ export default function OfframpPage() {
     );
   }
 
+  const loadingCatalog =
+    Boolean(country) && catalogState?.country !== country;
   const destinationsReady = corridors.length > 0 && !loadingCorridors;
   const accountReady =
     !loadingPaymentAccount &&

@@ -8,6 +8,7 @@ import {
   withRefreshedCookies,
 } from "@/lib/server/merchantRoute";
 import {
+  MERCHANT_TREASURY_CHAIN,
   selectMerchantTreasuryWallet,
   unwrapLinkedWalletsFromApi,
 } from "@/lib/merchantWallet";
@@ -32,7 +33,13 @@ export async function GET() {
       );
     }
     const json = await upstream.json();
-    const wallet = selectMerchantTreasuryWallet(unwrapLinkedWalletsFromApi(json));
+    const wallets = unwrapLinkedWalletsFromApi(json);
+    const wallet = selectMerchantTreasuryWallet(
+      wallets.filter(
+        (candidate) =>
+          candidate.chain.toLowerCase() === MERCHANT_TREASURY_CHAIN,
+      ),
+    );
     if (!wallet?.address) {
       return withRefreshedCookies(
         NextResponse.json({
