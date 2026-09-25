@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import Link from "next/link";
 import { Header } from "@/components/layout/Header";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { Button } from "@/components/ui/Button";
@@ -8,16 +9,22 @@ import { useMerchantExperience } from "@/lib/auth/useMerchantExperience";
 import {
   acceptOfframpQuote,
   createOfframpQuote,
+  getMerchantPaymentAccountBalance,
   getOfframpCatalog,
+  getOfframpCorridors,
   getOfframpOrder,
   type OfframpQuote,
 } from "@/lib/api/offramp";
 import { ApiError } from "@/lib/api/client";
-import { listLinkedWallets } from "@/lib/api/wallets";
-import { selectMerchantTreasuryWallet } from "@/lib/merchantWallet";
+import { countryDisplayLabel } from "@/lib/countryDisplay";
+import {
+  extractCatalogCurrency,
+  extractCatalogProviders,
+  parseOfframpCorridors,
+  type OfframpCorridor,
+} from "@/lib/offrampDiscovery";
 
 const DEFAULT_ASSET = {
-  // EIP-55 checksummed USDC on Base
   token: "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
   currency: "USDC",
   network: "BASE",
@@ -25,67 +32,7 @@ const DEFAULT_ASSET = {
 
 const EVM_ADDRESS_RE = /^0x[0-9a-fA-F]{40}$/;
 
-const COUNTRY_CURRENCY: Record<string, string> = {
-  TZ: "TZS",
-  KE: "KES",
-  UG: "UGX",
-};
-
-type Provider = { id: string; name?: string };
 type DestinationMethod = "mobile_money" | "bank";
-
-function extractProviders(
-  catalog: unknown,
-  country: string,
-  method: DestinationMethod,
-): Provider[] {
-  if (!catalog || typeof catalog !== "object") return [];
-  const root = catalog as Record<string, unknown>;
-  const data = (root.data ?? root) as Record<string, unknown>;
-  const offramp = (data.offramp ?? data) as Record<string, unknown>;
-  const countries = (offramp.countries ?? {}) as Record<string, unknown>;
-  const countryNode = (countries[country] ?? {}) as Record<string, unknown>;
-  const methods = (countryNode.payment_methods ?? {}) as Record<string, unknown>;
-  const node = (methods[method] ?? {}) as Record<string, unknown>;
-  const list = Array.isArray(node.providers) ? node.providers : [];
-  return list
-    .map((p) => {
-      const row = p as Record<string, unknown>;
-      return {
-        id: String(row.id ?? ""),
-        name: typeof row.name === "string" ? row.name : undefined,
-      };
-    })
-    .filter((p) => p.id);
-}
-
-function extractCountries(catalog: unknown): string[] {
-  if (!catalog || typeof catalog !== "object") return [];
-  const root = catalog as Record<string, unknown>;
-  const data = (root.data ?? root) as Record<string, unknown>;
-  const offramp = (data.offramp ?? data) as Record<string, unknown>;
-  const countries = (offramp.countries ?? {}) as Record<string, unknown>;
-  return Object.keys(countries).sort();
-}
-
-function currencyForCountry(catalog: unknown, country: string): string {
-  if (catalog && typeof catalog === "object") {
-    const root = catalog as Record<string, unknown>;
-    const data = (root.data ?? root) as Record<string, unknown>;
-    const offramp = (data.offramp ?? data) as Record<string, unknown>;
-    const countries = (offramp.countries ?? {}) as Record<string, unknown>;
-    const countryNode = (countries[country] ?? {}) as Record<string, unknown>;
-    const fromCatalog = countryNode.currency ?? countryNode.fiat_currency;
-    if (typeof fromCatalog === "string" && fromCatalog.trim()) {
-      return fromCatalog.trim().toUpperCase();
-    }
-  }
-  const mapped = COUNTRY_CURRENCY[country];
-  if (mapped) return mapped;
-  throw new Error(
-    `No fiat currency in catalog for ${country}. Pick another destination country.`,
-  );
-}
 
 function clearQuoteBoundFields(
   setQuote: (q: OfframpQuote | null) => void,
@@ -97,9 +44,22 @@ function clearQuoteBoundFields(
   setOrderStatus(null);
 }
 
+function formatUsdcBalance(value: number | null | undefined): string {
+  if (value === null || value === undefined) return "—";
+  if (!Number.isFinite(value)) return "—";
+  return value.toLocaleString(undefined, {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+}
+
 export default function OfframpPage() {
-  const { isMerchant, partnerCustomerId } = useMerchantExperience();
-  const [catalog, setCatalog] = useState<unknown>(null);
+  const { isMerchant } = useMerchantExperience();
+  const [corridors, setCorridors] = useState<OfframpCorridor[]>([]);
+  const [catalogState, setCatalogState] = useState<{
+    country: string;
+    data: unknown;
+  } | null>(null);
   const [country, setCountry] = useState("TZ");
   const [method, setMethod] = useState<DestinationMethod>("mobile_money");
   const [networkId, setNetworkId] = useState("");
@@ -107,36 +67,83 @@ export default function OfframpPage() {
   const [accountNumber, setAccountNumber] = useState("");
   const [accountName, setAccountName] = useState("");
   const [refundAddress, setRefundAddress] = useState("");
-  const [refundLocked, setRefundLocked] = useState(false);
   const [cryptoAmount, setCryptoAmount] = useState("20");
   const [quote, setQuote] = useState<OfframpQuote | null>(null);
   const [orderId, setOrderId] = useState<string | null>(null);
   const [orderStatus, setOrderStatus] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-  const [loadingCatalog, setLoadingCatalog] = useState(true);
+  const [loadingCorridors, setLoadingCorridors] = useState(true);
+  const [balanceUsdc, setBalanceUsdc] = useState<number | null | undefined>(
+    undefined,
+  );
+  const [balanceStatus, setBalanceStatus] = useState<
+    "ok" | "unavailable" | "no_account" | "load_failed" | undefined
+  >(undefined);
+  const [loadingPaymentAccount, setLoadingPaymentAccount] = useState(true);
+  const [paymentAccountError, setPaymentAccountError] = useState<string | null>(
+    null,
+  );
+
+  const paymentAccountReq = useRef(0);
+
+  const loadPaymentAccount = useCallback(() => {
+    const reqId = ++paymentAccountReq.current;
+    setLoadingPaymentAccount(true);
+    setPaymentAccountError(null);
+    return getMerchantPaymentAccountBalance()
+      .then((data) => {
+        if (reqId !== paymentAccountReq.current) return;
+        setBalanceUsdc(data.balance_usdc);
+        setBalanceStatus(data.balance_status ?? (data.has_account ? "ok" : "no_account"));
+        if (data.has_account && data.address) {
+          setRefundAddress(data.address);
+        } else {
+          setRefundAddress("");
+        }
+      })
+      .catch((err) => {
+        if (reqId !== paymentAccountReq.current) return;
+        setBalanceUsdc(null);
+        setBalanceStatus("load_failed");
+        setRefundAddress("");
+        setPaymentAccountError(
+          err instanceof ApiError
+            ? err.message
+            : "Could not load payment account. Try again.",
+        );
+      })
+      .finally(() => {
+        if (reqId !== paymentAccountReq.current) return;
+        setLoadingPaymentAccount(false);
+      });
+  }, []);
 
   useEffect(() => {
     if (!isMerchant) return;
     let cancelled = false;
-    setLoadingCatalog(true);
-    setError(null);
-    getOfframpCatalog()
+    getOfframpCorridors()
       .then((data) => {
         if (cancelled) return;
-        setCatalog(data);
-        const codes = extractCountries(data);
-        if (codes.length > 0) {
-          setCountry((prev) => (codes.includes(prev) ? prev : codes[0]));
+        const rows = parseOfframpCorridors(data);
+        setCorridors(rows);
+        if (rows.length > 0) {
+          setCountry((prev) =>
+            rows.some((r) => r.country === prev) ? prev : rows[0].country,
+          );
+        } else {
+          setCountry("");
         }
       })
       .catch((err) => {
         if (!cancelled) {
-          setError(err instanceof ApiError ? err.message : "Failed to load destinations.");
+          setError(
+            err instanceof ApiError ? err.message : "Failed to load destinations.",
+          );
         }
       })
       .finally(() => {
-        if (!cancelled) setLoadingCatalog(false);
+        if (!cancelled) setLoadingCorridors(false);
       });
     return () => {
       cancelled = true;
@@ -144,31 +151,56 @@ export default function OfframpPage() {
   }, [isMerchant]);
 
   useEffect(() => {
-    if (!isMerchant) return;
+    if (!isMerchant || !country) return;
     let cancelled = false;
-    listLinkedWallets()
-      .then((res) => {
-        const treasury = selectMerchantTreasuryWallet(res.data ?? []);
-        if (cancelled || !treasury?.address) return;
-        setRefundAddress(treasury.address);
-        setRefundLocked(true);
+    getOfframpCatalog(country)
+      .then((data) => {
+        if (!cancelled) {
+          setCatalogState({ country, data });
+        }
       })
-      .catch(() => {
-        if (!cancelled) setRefundLocked(false);
+      .catch((err) => {
+        if (!cancelled) {
+          setError(
+            err instanceof ApiError ? err.message : "Failed to load providers.",
+          );
+        }
       });
     return () => {
       cancelled = true;
     };
-  }, [isMerchant]);
+  }, [isMerchant, country]);
 
-  const countries = useMemo(() => extractCountries(catalog), [catalog]);
+  useEffect(() => {
+    if (!isMerchant) return;
+    queueMicrotask(() => {
+      void loadPaymentAccount();
+    });
+  }, [isMerchant, loadPaymentAccount]);
+
+  const catalog =
+    catalogState?.country === country ? catalogState.data : null;
+
+  const corridorCurrency = useMemo(() => {
+    const row = corridors.find((c) => c.country === country);
+    if (row?.currency) return row.currency;
+    return extractCatalogCurrency(catalog, country);
+  }, [corridors, country, catalog]);
+
   const providers = useMemo(
-    () => extractProviders(catalog, country, method),
+    () => extractCatalogProviders(catalog, country, method),
     [catalog, country, method],
   );
   const selectedNetworkId = providers.some((p) => p.id === networkId)
     ? networkId
     : (providers[0]?.id ?? "");
+
+  function resolveQuoteCurrency(): string {
+    if (corridorCurrency) return corridorCurrency;
+    throw new Error(
+      `No fiat currency for ${country}. Pick another destination country.`,
+    );
+  }
 
   async function handleQuote() {
     setBusy(true);
@@ -178,9 +210,7 @@ export default function OfframpPage() {
       const refund = refundAddress.trim();
       if (!EVM_ADDRESS_RE.test(refund)) {
         throw new Error(
-          refundLocked
-            ? "Payment account address is invalid. Set up account again from Profile."
-            : "Link a payment account on Profile or enter a valid Base address (0x…).",
+          "Link a payment account before withdrawing. Set up under Profile → Payment account.",
         );
       }
       const amount = Number(cryptoAmount);
@@ -202,7 +232,7 @@ export default function OfframpPage() {
               network_id: selectedNetworkId,
             };
       const q = await createOfframpQuote({
-        currency: currencyForCountry(catalog, country),
+        currency: resolveQuoteCurrency(),
         country,
         crypto_amount: amount,
         asset: { ...DEFAULT_ASSET },
@@ -210,6 +240,7 @@ export default function OfframpPage() {
         refund_address: refund,
       });
       setQuote(q);
+      void loadPaymentAccount();
     } catch (err) {
       setError(err instanceof ApiError || err instanceof Error ? err.message : "Quote failed.");
     } finally {
@@ -243,6 +274,7 @@ export default function OfframpPage() {
       } else {
         setOrderStatus("accepted");
       }
+      void loadPaymentAccount();
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Accept failed.");
     } finally {
@@ -266,15 +298,76 @@ export default function OfframpPage() {
     );
   }
 
+  const loadingCatalog =
+    Boolean(country) && catalogState?.country !== country;
+  const destinationsReady = corridors.length > 0 && !loadingCorridors;
+  const accountReady =
+    !loadingPaymentAccount &&
+    !paymentAccountError &&
+    EVM_ADDRESS_RE.test(refundAddress.trim());
+  const canQuote =
+    destinationsReady &&
+    accountReady &&
+    !loadingCatalog &&
+    !busy &&
+    selectedNetworkId.length > 0;
+
   return (
     <>
       <Header title="Off-ramp" />
       <div className="p-7 max-w-2xl">
         <h1 className="mb-1 text-[22px] font-extrabold tracking-tight">Withdraw</h1>
         <p className="mb-6 text-sm text-muted">
-          Send funds to mobile money or bank. Linked customer:{" "}
-          <span className="mono text-xs">{partnerCustomerId ?? "—"}</span>
+          Send USDC from your payment account to mobile money or bank in supported
+          markets.
         </p>
+
+        <GlassCard className="mb-4 p-5">
+          <div className="text-[11px] font-bold tracking-wide text-faint uppercase">
+            Available balance
+          </div>
+          <div className="mt-1 flex flex-wrap items-baseline gap-2">
+            <span className="mono text-[26px] font-extrabold tracking-tight">
+              {balanceUsdc === undefined ? "…" : formatUsdcBalance(balanceUsdc)}
+            </span>
+            <span className="text-[13px] font-semibold text-muted">USDC</span>
+            <button
+              type="button"
+              className="text-[12px] font-semibold text-subtle underline disabled:opacity-50"
+              disabled={loadingPaymentAccount}
+              onClick={() => void loadPaymentAccount()}
+            >
+              Refresh
+            </button>
+          </div>
+          {loadingPaymentAccount && balanceUsdc === undefined && (
+            <p className="mt-2 text-[12px] text-muted">Loading payment account…</p>
+          )}
+          {paymentAccountError && (
+            <p className="mt-2 text-[12px] text-[oklch(0.55_0.19_25)]">
+              {paymentAccountError}
+            </p>
+          )}
+          {!loadingPaymentAccount &&
+            !paymentAccountError &&
+            balanceStatus === "no_account" && (
+              <p className="mt-2 text-[12px] text-muted">
+                No payment account linked.{" "}
+                <Link href="/account/setup" className="font-bold underline">
+                  Set up account
+                </Link>{" "}
+                and fund USDC on Base from Profile.
+              </p>
+            )}
+          {!loadingPaymentAccount &&
+            !paymentAccountError &&
+            balanceStatus === "unavailable" && (
+              <p className="mt-2 text-[12px] text-muted">
+                Balance could not be read from Base. Check{" "}
+                <code className="text-[11px]">BASE_RPC_URL</code> or try Refresh.
+              </p>
+            )}
+        </GlassCard>
 
         {error && (
           <p className="mb-4 rounded-lg border border-line-strong bg-white p-3 text-[13px] text-[oklch(0.55_0.19_25)]">
@@ -289,16 +382,23 @@ export default function OfframpPage() {
               <select
                 className="mt-1 w-full rounded-lg border border-line bg-white px-3 py-2 text-[13px]"
                 value={country}
+                disabled={!destinationsReady}
                 onChange={(e) => {
                   setCountry(e.target.value);
                   clearQuoteBoundFields(setQuote, setOrderId, setOrderStatus);
                 }}
               >
-                {(countries.length ? countries : ["TZ", "KE", "UG"]).map((c) => (
-                  <option key={c} value={c}>
-                    {c}
+                {corridors.length === 0 ? (
+                  <option value="">
+                    {loadingCorridors ? "Loading…" : "No destinations available"}
                   </option>
-                ))}
+                ) : (
+                  corridors.map((c) => (
+                    <option key={c.country} value={c.country}>
+                      {countryDisplayLabel(c.country, c.currency)}
+                    </option>
+                  ))
+                )}
               </select>
             </label>
             <label className="block text-[12px] font-semibold text-faint">
@@ -339,7 +439,7 @@ export default function OfframpPage() {
                 setNetworkId(e.target.value);
                 clearQuoteBoundFields(setQuote, setOrderId, setOrderStatus);
               }}
-              disabled={loadingCatalog}
+              disabled={loadingCatalog || loadingCorridors}
             >
               {providers.map((p) => (
                 <option key={p.id} value={p.id}>
@@ -347,28 +447,6 @@ export default function OfframpPage() {
                 </option>
               ))}
             </select>
-          </label>
-
-          <label className="block text-[12px] font-semibold text-faint">
-            Payment account (USDC on Base)
-            <input
-              className="mt-1 w-full rounded-lg border border-line bg-white px-3 py-2 text-[13px] mono disabled:bg-[oklch(0.97_0.004_264)]"
-              placeholder="0x…"
-              value={refundAddress}
-              disabled={busy || refundLocked}
-              readOnly={refundLocked}
-              onChange={(e) => {
-                setRefundAddress(e.target.value);
-                clearQuoteBoundFields(setQuote, setOrderId, setOrderStatus);
-              }}
-              autoComplete="off"
-              spellCheck={false}
-            />
-            <span className="mt-1 block text-[11px] font-normal text-muted">
-              {refundLocked
-                ? "Withdrawals send from your linked payment account (Profile). Failed sends refund here."
-                : "Set up your payment account under Profile, or enter the address you will send USDC from."}
-            </span>
           </label>
 
           {method === "mobile_money" ? (
@@ -411,8 +489,8 @@ export default function OfframpPage() {
             </div>
           )}
 
-          <Button onClick={handleQuote} disabled={busy || loadingCatalog}>
-            {busy ? "Working…" : "Get quote"}
+          <Button onClick={handleQuote} disabled={!canQuote}>
+            {busy ? "Working…" : loadingPaymentAccount ? "Loading account…" : "Get quote"}
           </Button>
         </GlassCard>
 

@@ -112,6 +112,54 @@ export async function getOfframpCatalog(country?: string) {
   });
 }
 
+export type OfframpCorridorsPayload = {
+  african_markets?: Array<{
+    country?: string;
+    currency?: string;
+    offramp?: boolean;
+  }>;
+};
+
+export async function getOfframpCorridors() {
+  return offrampFetch<OfframpCorridorsPayload>("corridors", {
+    query: { order_type: "OffRamp" },
+  });
+}
+
+export type PaymentAccountBalance = {
+  balance_usdc: number | null;
+  currency: string;
+  has_account: boolean;
+  /** Treasury address for off-ramp refund/source (session owner only). */
+  address?: string;
+  balance_status?: "ok" | "unavailable" | "no_account";
+};
+
+export async function getMerchantPaymentAccountBalance() {
+  const res = await fetch("/api/merchant/payment-account/balance", {
+    credentials: "include",
+    cache: "no-store",
+  });
+  const text = await res.text();
+  let json: unknown = null;
+  if (text) {
+    try {
+      json = JSON.parse(text);
+    } catch {
+      json = { message: text };
+    }
+  }
+  if (!res.ok) {
+    const message =
+      json &&
+      typeof json === "object" &&
+      ((json as { message?: string }).message ?? "Balance unavailable");
+    throw new ApiError(String(message), res.status, json);
+  }
+  const envelope = json as { data?: PaymentAccountBalance };
+  return envelope.data ?? (json as PaymentAccountBalance);
+}
+
 export async function createOfframpQuote(body: OfframpQuoteRequest) {
   return offrampFetch<OfframpQuote>("orders/quote", {
     method: "POST",
