@@ -20,7 +20,9 @@ import { countryDisplayLabel } from "@/lib/countryDisplay";
 import {
   extractCatalogCurrency,
   extractCatalogProviders,
+  listCatalogDestinationMethods,
   parseOfframpCorridors,
+  type DestinationMethod,
   type OfframpCorridor,
 } from "@/lib/offrampDiscovery";
 
@@ -32,7 +34,10 @@ const DEFAULT_ASSET = {
 
 const EVM_ADDRESS_RE = /^0x[0-9a-fA-F]{40}$/;
 
-type DestinationMethod = "mobile_money" | "bank";
+const DESTINATION_LABELS: Record<DestinationMethod, string> = {
+  mobile_money: "Mobile money",
+  bank: "Bank",
+};
 
 function clearQuoteBoundFields(
   setQuote: (q: OfframpQuote | null) => void,
@@ -187,9 +192,18 @@ export default function OfframpPage() {
     return extractCatalogCurrency(catalog, country);
   }, [corridors, country, catalog]);
 
+  const availableMethods = useMemo(
+    () => listCatalogDestinationMethods(catalog, country),
+    [catalog, country],
+  );
+
+  const activeMethod: DestinationMethod = availableMethods.includes(method)
+    ? method
+    : (availableMethods[0] ?? "mobile_money");
+
   const providers = useMemo(
-    () => extractCatalogProviders(catalog, country, method),
-    [catalog, country, method],
+    () => extractCatalogProviders(catalog, country, activeMethod),
+    [catalog, country, activeMethod],
   );
   const selectedNetworkId = providers.some((p) => p.id === networkId)
     ? networkId
@@ -219,7 +233,7 @@ export default function OfframpPage() {
       }
       if (!selectedNetworkId) throw new Error("Select a destination network.");
       const payment_method =
-        method === "mobile_money"
+        activeMethod === "mobile_money"
           ? {
               type: "mobile_money" as const,
               phone_number: phone.trim(),
@@ -310,6 +324,8 @@ export default function OfframpPage() {
     accountReady &&
     !loadingCatalog &&
     !busy &&
+    availableMethods.length > 0 &&
+    providers.length > 0 &&
     selectedNetworkId.length > 0;
 
   return (
@@ -415,41 +431,67 @@ export default function OfframpPage() {
             </label>
           </div>
 
-          <label className="block text-[12px] font-semibold text-faint">
-            Destination type
-            <select
-              className="mt-1 w-full rounded-lg border border-line bg-white px-3 py-2 text-[13px]"
-              value={method}
-              onChange={(e) => {
-                setMethod(e.target.value as DestinationMethod);
-                clearQuoteBoundFields(setQuote, setOrderId, setOrderStatus);
-              }}
-            >
-              <option value="mobile_money">Mobile money</option>
-              <option value="bank">Bank</option>
-            </select>
-          </label>
+          {loadingCatalog ? (
+            <p className="text-[13px] text-muted">Loading payout options…</p>
+          ) : availableMethods.length === 0 ? (
+            <p className="text-[13px] text-muted">
+              No mobile money or bank payout is available for this country in the
+              catalog yet. Try another country or contact ElementPay ops.
+            </p>
+          ) : (
+            <>
+              {availableMethods.length === 1 ? (
+                <div className="text-[13px]">
+                  <span className="text-[12px] font-semibold text-faint">
+                    Destination type
+                  </span>
+                  <p className="mt-1 font-medium">
+                    {DESTINATION_LABELS[availableMethods[0]]}
+                  </p>
+                </div>
+              ) : (
+                <label className="block text-[12px] font-semibold text-faint">
+                  Destination type
+                  <select
+                    className="mt-1 w-full rounded-lg border border-line bg-white px-3 py-2 text-[13px]"
+                    value={activeMethod}
+                    onChange={(e) => {
+                      setMethod(e.target.value as DestinationMethod);
+                      clearQuoteBoundFields(setQuote, setOrderId, setOrderStatus);
+                    }}
+                  >
+                    {availableMethods.map((m) => (
+                      <option key={m} value={m}>
+                        {DESTINATION_LABELS[m]}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              )}
 
-          <label className="block text-[12px] font-semibold text-faint">
-            Provider
-            <select
-              className="mt-1 w-full rounded-lg border border-line bg-white px-3 py-2 text-[13px]"
-              value={selectedNetworkId}
-              onChange={(e) => {
-                setNetworkId(e.target.value);
-                clearQuoteBoundFields(setQuote, setOrderId, setOrderStatus);
-              }}
-              disabled={loadingCatalog || loadingCorridors}
-            >
-              {providers.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.name ?? p.id}
-                </option>
-              ))}
-            </select>
-          </label>
+              {providers.length > 0 && (
+                <label className="block text-[12px] font-semibold text-faint">
+                  Provider
+                  <select
+                    className="mt-1 w-full rounded-lg border border-line bg-white px-3 py-2 text-[13px]"
+                    value={selectedNetworkId}
+                    onChange={(e) => {
+                      setNetworkId(e.target.value);
+                      clearQuoteBoundFields(setQuote, setOrderId, setOrderStatus);
+                    }}
+                  >
+                    {providers.map((p) => (
+                      <option key={p.id} value={p.id}>
+                        {p.name ?? p.id}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              )}
+            </>
+          )}
 
-          {method === "mobile_money" ? (
+          {activeMethod === "mobile_money" && availableMethods.length > 0 ? (
             <label className="block text-[12px] font-semibold text-faint">
               Phone (E.164)
               <input
@@ -462,7 +504,7 @@ export default function OfframpPage() {
                 }}
               />
             </label>
-          ) : (
+          ) : activeMethod === "bank" && availableMethods.length > 0 ? (
             <div className="grid grid-cols-2 gap-3">
               <label className="block text-[12px] font-semibold text-faint">
                 Account number
@@ -487,7 +529,7 @@ export default function OfframpPage() {
                 />
               </label>
             </div>
-          )}
+          ) : null}
 
           <Button onClick={handleQuote} disabled={!canQuote}>
             {busy ? "Working…" : loadingPaymentAccount ? "Loading account…" : "Get quote"}
