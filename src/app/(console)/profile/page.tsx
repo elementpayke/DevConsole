@@ -11,6 +11,7 @@ import { useAuth } from "@/lib/auth/AuthContext";
 import * as authApi from "@/lib/api/auth";
 import { ApiError } from "@/lib/api/client";
 import { colors } from "@/lib/theme";
+import { MerchantPaymentAccountCard } from "@/components/merchant/MerchantPaymentAccountCard";
 
 export default function ProfilePage() {
   const { user, isAuthenticated, logout } = useAuth();
@@ -105,6 +106,8 @@ export default function ProfilePage() {
             </div>
           </div>
         </GlassCard>
+
+        <MerchantPaymentAccountCard />
 
         <GlassCard className="mb-5 p-[22px]">
           <div className="mb-0.5 text-[14.5px] font-bold">Reset password</div>
