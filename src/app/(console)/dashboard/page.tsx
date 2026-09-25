@@ -6,6 +6,7 @@ import { StatCard } from "@/components/dashboard/StatCard";
 import { FiatBreakdown } from "@/components/dashboard/FiatBreakdown";
 import { CryptoBreakdownTable } from "@/components/dashboard/CryptoBreakdownTable";
 import { QuickActions } from "@/components/dashboard/QuickActions";
+import { MerchantWalletBanner } from "@/components/merchant/MerchantWalletBanner";
 import { useAuth } from "@/lib/auth/AuthContext";
 import { useMerchantExperience } from "@/lib/auth/useMerchantExperience";
 import { getDashboardStats } from "@/lib/api/dashboard";
@@ -44,6 +45,7 @@ export default function DashboardPage() {
     <>
       <Header title="Overview" showOperational />
       <div className="p-7">
+        {isMerchant && <MerchantWalletBanner />}
         <h1 className="mb-1 text-[22px] font-extrabold tracking-tight">
           Welcome back{firstName !== "there" ? `, ${firstName}` : ""}
         </h1>
