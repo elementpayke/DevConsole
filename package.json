@@ -12,6 +12,7 @@
     "test:all": "npm run lint && npm run test && npm run build && bash scripts/check-client-bundle-secrets.sh"
   },
   "dependencies": {
+    "@privy-io/react-auth": "^3.13.1",
     "jspdf": "^4.2.1",
     "jspdf-autotable": "^5.0.8",
     "next": "16.2.11",
