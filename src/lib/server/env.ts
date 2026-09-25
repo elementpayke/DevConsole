@@ -25,3 +25,8 @@ export function getConsolePartnerApiKey(): string {
 export function isProductionRuntime(): boolean {
   return process.env.NODE_ENV === "production";
 }
+
+/** Self-serve merchant register + onboarding BFF (default off until Phase B ready). */
+export function isMerchantSignupEnabled(): boolean {
+  return process.env.NEXT_PUBLIC_MERCHANT_SIGNUP_ENABLED === "true";
+}

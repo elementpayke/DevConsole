@@ -11,13 +11,17 @@ import {
   canSubmitWithTurnstile,
   isTurnstileConfigured,
 } from "@/lib/turnstile";
+import { isMerchantSignupEnabled } from "@/lib/merchantSignup";
 
 type AccountType = "merchant" | "developer";
 
 export default function RegisterPage() {
   const { register } = useAuth();
   const router = useRouter();
-  const [accountType, setAccountType] = useState<AccountType>("merchant");
+  const merchantSignupOpen = isMerchantSignupEnabled();
+  const [accountType, setAccountType] = useState<AccountType>(
+    merchantSignupOpen ? "merchant" : "developer",
+  );
   const [businessEmail, setBusinessEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -41,7 +45,9 @@ export default function RegisterPage() {
     setLoading(true);
     try {
       const email = businessEmail.trim();
-      await register(email, password, turnstileToken, accountType);
+      const role =
+        accountType === "merchant" && merchantSignupOpen ? "merchant" : "developer";
+      await register(email, password, turnstileToken, role);
       router.push(`/verify-email?email=${encodeURIComponent(email)}`);
     } catch (err) {
       setTurnstileToken(null);
@@ -68,20 +74,29 @@ export default function RegisterPage() {
           <div className="grid grid-cols-2 gap-2">
             <button
               type="button"
-              onClick={() => setAccountType("merchant")}
+              aria-pressed={accountType === "merchant"}
+              disabled={!merchantSignupOpen}
+              onClick={() => {
+                if (merchantSignupOpen) setAccountType("merchant");
+              }}
               className={`rounded-lg border px-3 py-2.5 text-left text-[13px] ${
-                accountType === "merchant"
-                  ? "border-primary bg-white font-semibold"
-                  : "border-line-strong text-muted"
+                !merchantSignupOpen
+                  ? "cursor-not-allowed border-line-strong bg-[oklch(0.97_0.004_264)] text-faint opacity-70"
+                  : accountType === "merchant"
+                    ? "border-primary bg-white font-semibold"
+                    : "border-line-strong text-muted"
               }`}
             >
               Merchant
               <span className="mt-0.5 block text-[11px] font-normal text-faint">
-                Business KYB, Off-ramp, collections
+                {merchantSignupOpen
+                  ? "Business KYB, Off-ramp, collections"
+                  : "Coming soon — contact ElementPay for early access"}
               </span>
             </button>
             <button
               type="button"
+              aria-pressed={accountType === "developer"}
               onClick={() => setAccountType("developer")}
               className={`rounded-lg border px-3 py-2.5 text-left text-[13px] ${
                 accountType === "developer"
