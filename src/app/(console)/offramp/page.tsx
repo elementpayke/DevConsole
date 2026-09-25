@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Header } from "@/components/layout/Header";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { Button } from "@/components/ui/Button";
@@ -13,6 +13,8 @@ import {
   type OfframpQuote,
 } from "@/lib/api/offramp";
 import { ApiError } from "@/lib/api/client";
+import { listLinkedWallets } from "@/lib/api/wallets";
+import { selectMerchantTreasuryWallet } from "@/lib/merchantWallet";
 
 const DEFAULT_ASSET = {
   // EIP-55 checksummed USDC on Base
@@ -79,10 +81,10 @@ function currencyForCountry(catalog: unknown, country: string): string {
     }
   }
   const mapped = COUNTRY_CURRENCY[country];
-  if (!mapped) {
-    throw new Error(`Unsupported country: ${country}`);
-  }
-  return mapped;
+  if (mapped) return mapped;
+  throw new Error(
+    `No fiat currency in catalog for ${country}. Pick another destination country.`,
+  );
 }
 
 function clearQuoteBoundFields(
@@ -105,6 +107,7 @@ export default function OfframpPage() {
   const [accountNumber, setAccountNumber] = useState("");
   const [accountName, setAccountName] = useState("");
   const [refundAddress, setRefundAddress] = useState("");
+  const [refundLocked, setRefundLocked] = useState(false);
   const [cryptoAmount, setCryptoAmount] = useState("20");
   const [quote, setQuote] = useState<OfframpQuote | null>(null);
   const [orderId, setOrderId] = useState<string | null>(null);
@@ -113,22 +116,50 @@ export default function OfframpPage() {
   const [busy, setBusy] = useState(false);
   const [loadingCatalog, setLoadingCatalog] = useState(true);
 
-  const loadCatalog = useCallback(async () => {
+  useEffect(() => {
+    if (!isMerchant) return;
+    let cancelled = false;
     setLoadingCatalog(true);
     setError(null);
-    try {
-      const data = await getOfframpCatalog(country || undefined);
-      setCatalog(data);
-    } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Failed to load destinations.");
-    } finally {
-      setLoadingCatalog(false);
-    }
-  }, [country]);
+    getOfframpCatalog()
+      .then((data) => {
+        if (cancelled) return;
+        setCatalog(data);
+        const codes = extractCountries(data);
+        if (codes.length > 0) {
+          setCountry((prev) => (codes.includes(prev) ? prev : codes[0]));
+        }
+      })
+      .catch((err) => {
+        if (!cancelled) {
+          setError(err instanceof ApiError ? err.message : "Failed to load destinations.");
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setLoadingCatalog(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [isMerchant]);
 
   useEffect(() => {
-    void loadCatalog();
-  }, [loadCatalog]);
+    if (!isMerchant) return;
+    let cancelled = false;
+    listLinkedWallets()
+      .then((res) => {
+        const treasury = selectMerchantTreasuryWallet(res.data ?? []);
+        if (cancelled || !treasury?.address) return;
+        setRefundAddress(treasury.address);
+        setRefundLocked(true);
+      })
+      .catch(() => {
+        if (!cancelled) setRefundLocked(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [isMerchant]);
 
   const countries = useMemo(() => extractCountries(catalog), [catalog]);
   const providers = useMemo(
@@ -146,7 +177,11 @@ export default function OfframpPage() {
     try {
       const refund = refundAddress.trim();
       if (!EVM_ADDRESS_RE.test(refund)) {
-        throw new Error("Enter the wallet you send from (0x… refund address).");
+        throw new Error(
+          refundLocked
+            ? "Payment account address is invalid. Set up account again from Profile."
+            : "Link a payment account on Profile or enter a valid Base address (0x…).",
+        );
       }
       const amount = Number(cryptoAmount);
       if (!Number.isFinite(amount) || amount <= 0) {
@@ -315,12 +350,13 @@ export default function OfframpPage() {
           </label>
 
           <label className="block text-[12px] font-semibold text-faint">
-            Send / refund wallet (Base)
+            Payment account (USDC on Base)
             <input
-              className="mt-1 w-full rounded-lg border border-line bg-white px-3 py-2 text-[13px] mono"
+              className="mt-1 w-full rounded-lg border border-line bg-white px-3 py-2 text-[13px] mono disabled:bg-[oklch(0.97_0.004_264)]"
               placeholder="0x…"
               value={refundAddress}
-              disabled={busy}
+              disabled={busy || refundLocked}
+              readOnly={refundLocked}
               onChange={(e) => {
                 setRefundAddress(e.target.value);
                 clearQuoteBoundFields(setQuote, setOrderId, setOrderStatus);
@@ -329,7 +365,9 @@ export default function OfframpPage() {
               spellCheck={false}
             />
             <span className="mt-1 block text-[11px] font-normal text-muted">
-              Use the wallet you send USDC from. Failed withdraws refund here.
+              {refundLocked
+                ? "Withdrawals send from your linked payment account (Profile). Failed sends refund here."
+                : "Set up your payment account under Profile, or enter the address you will send USDC from."}
             </span>
           </label>
 
