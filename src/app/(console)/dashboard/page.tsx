@@ -45,7 +45,7 @@ export default function DashboardPage() {
     <>
       <Header title="Overview" showOperational />
       <div className="p-7">
-        <MerchantWalletBanner />
+        {isMerchant && <MerchantWalletBanner />}
         <h1 className="mb-1 text-[22px] font-extrabold tracking-tight">
           Welcome back{firstName !== "there" ? `, ${firstName}` : ""}
         </h1>

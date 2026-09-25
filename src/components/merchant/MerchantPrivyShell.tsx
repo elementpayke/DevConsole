@@ -22,7 +22,8 @@ export function MerchantPrivyShell({ children }: { children: ReactNode }) {
   if (!appId) {
     return (
       <div className="p-6 text-sm text-muted">
-        Wallet setup is unavailable (`NEXT_PUBLIC_PRIVY_APP_ID` is not configured).
+        Account setup is temporarily unavailable. Please try again later or contact
+        support.
       </div>
     );
   }

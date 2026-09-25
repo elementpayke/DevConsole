@@ -36,7 +36,7 @@ export function MerchantWalletSetupPanel() {
       setLinked(selectMerchantTreasuryWallet(rows));
       setError(null);
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Failed to load wallets");
+      setError(err instanceof ApiError ? err.message : "Failed to load account status");
     } finally {
       setLoading(false);
     }
@@ -52,7 +52,7 @@ export function MerchantWalletSetupPanel() {
     if (!address) {
       const timeout = window.setTimeout(() => {
         setError(
-          "Wallet creation is taking longer than expected. Refresh the page and try again.",
+          "Account setup is taking longer than expected. Refresh the page and try again.",
         );
         setPendingLink(false);
         setBusy(false);
@@ -96,7 +96,7 @@ export function MerchantWalletSetupPanel() {
     setError(null);
     try {
       if (!ready || !authenticated) {
-        throw new Error("Wallet service is still starting. Try again in a moment.");
+        throw new Error("Account setup is still starting. Try again in a moment.");
       }
 
       if (embeddedAddress(privyWallets)) {
@@ -119,15 +119,14 @@ export function MerchantWalletSetupPanel() {
   }
 
   if (loading) {
-    return <p className="text-sm text-muted">Loading wallet status…</p>;
+    return <p className="text-sm text-muted">Loading account status…</p>;
   }
 
   if (linked) {
     return (
       <GlassCard className="p-5">
-        <p className="text-sm text-muted">Merchant treasury wallet</p>
+        <p className="text-sm text-muted">Your ElementPay payment account</p>
         <p className="mono mt-2 break-all text-xs">{linked.address}</p>
-        <p className="mt-2 text-[12px] text-faint">Chain: {linked.chain}</p>
         <Button className="mt-4" onClick={() => router.push("/dashboard")}>
           Back to dashboard
         </Button>
@@ -137,11 +136,10 @@ export function MerchantWalletSetupPanel() {
 
   return (
     <GlassCard className="p-5">
-      <h2 className="text-lg font-bold">Set up your treasury wallet</h2>
+      <h2 className="text-lg font-bold">Set up your payment account</h2>
       <p className="mt-2 text-[13px] text-muted">
-        One embedded wallet on Base holds USDC for Off-ramp. If you already use ElementPay
-        with the same email, your existing embedded wallet is reused (Privy allows one
-        embedded wallet per account).
+        ElementPay uses this account for your collections and Off-ramp withdrawals. If you
+        already use ElementPay with the same email, we reuse your existing account.
       </p>
       {error && (
         <p className="mt-3 text-[12.5px] font-medium text-[oklch(0.55_0.19_25)]">{error}</p>
@@ -151,7 +149,7 @@ export function MerchantWalletSetupPanel() {
         disabled={busy || !ready}
         onClick={() => void handleSetup()}
       >
-        {busy ? "Setting up…" : "Create or link wallet"}
+        {busy ? "Setting up…" : "Activate account"}
       </Button>
     </GlassCard>
   );

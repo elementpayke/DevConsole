@@ -42,7 +42,7 @@ export async function POST(req: NextRequest) {
 
   if (!isValidEvmAddress(address)) {
     return NextResponse.json(
-      { message: "A valid 0x EVM address is required" },
+      { message: "Account setup could not be completed." },
       { status: 400 },
     );
   }

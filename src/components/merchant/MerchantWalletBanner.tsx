@@ -40,9 +40,9 @@ export function MerchantWalletBanner() {
 
   return (
     <div className="mb-5 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-[13px] text-amber-950">
-      Set up your treasury wallet before using Off-ramp.{" "}
-      <Link href="/wallet/setup" className="font-bold underline">
-        Set up wallet
+      Finish payment account setup before using Off-ramp.{" "}
+      <Link href="/account/setup" className="font-bold underline">
+        Set up account
       </Link>
     </div>
   );
