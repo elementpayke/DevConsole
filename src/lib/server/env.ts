@@ -30,3 +30,10 @@ export function isProductionRuntime(): boolean {
 export function isMerchantSignupEnabled(): boolean {
   return process.env.NEXT_PUBLIC_MERCHANT_SIGNUP_ENABLED === "true";
 }
+
+/** Base JSON-RPC for merchant USDC balance reads (server-only). */
+export function getBaseRpcUrl(): string {
+  const url = process.env.BASE_RPC_URL?.trim();
+  if (url) return url;
+  return "https://mainnet.base.org";
+}
