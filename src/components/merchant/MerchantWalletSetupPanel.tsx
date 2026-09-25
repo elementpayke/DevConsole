@@ -49,7 +49,16 @@ export function MerchantWalletSetupPanel() {
   useEffect(() => {
     if (!pendingLink) return;
     const address = embeddedAddress(privyWallets);
-    if (!address) return;
+    if (!address) {
+      const timeout = window.setTimeout(() => {
+        setError(
+          "Wallet creation is taking longer than expected. Refresh the page and try again.",
+        );
+        setPendingLink(false);
+        setBusy(false);
+      }, 60_000);
+      return () => window.clearTimeout(timeout);
+    }
 
     let cancelled = false;
     (async () => {

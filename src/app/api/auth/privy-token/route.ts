@@ -1,5 +1,6 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import {
+  assertTrustedOrigin,
   fetchAggregator,
   misconfiguredSecretResponse,
   nextResponseFromUpstream,
@@ -14,7 +15,10 @@ import { withRefreshedCookies } from "@/lib/server/merchantRoute";
  * Mint RS256 JWT for Privy custom auth from the Console HTTP-only session.
  */
 
-export async function POST() {
+export async function POST(req: NextRequest) {
+  const originBlock = assertTrustedOrigin(req);
+  if (originBlock) return originBlock;
+
   let session = await resolveSessionAccessToken();
   if (!session) {
     return NextResponse.json({ message: "Unauthorized" }, { status: 401 });

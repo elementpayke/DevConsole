@@ -1,6 +1,10 @@
 import { NextResponse } from "next/server";
 import { setAuthCookies } from "@/lib/server/cookies";
-import { fetchMe, resolveSessionAccessToken } from "@/lib/server/session";
+import {
+  fetchMe,
+  refreshTokens,
+  resolveSessionAccessToken,
+} from "@/lib/server/session";
 import type { AuthTokens, User } from "@/lib/types";
 
 export type MerchantSessionContext = {
@@ -17,9 +21,20 @@ export async function requireMerchantSession(): Promise<
     return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
   }
 
-  const user = await fetchMe(session.accessToken);
+  let accessToken = session.accessToken;
+  let refreshed = session.refreshed;
+  let user = await fetchMe(accessToken);
   if (!user) {
-    return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+    const next = await refreshTokens();
+    if (!next) {
+      return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+    }
+    refreshed = next;
+    accessToken = next.access_token;
+    user = await fetchMe(accessToken);
+    if (!user) {
+      return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+    }
   }
   if (user.role !== "merchant") {
     return NextResponse.json(
@@ -30,8 +45,8 @@ export async function requireMerchantSession(): Promise<
 
   return {
     user,
-    accessToken: session.accessToken,
-    refreshed: session.refreshed,
+    accessToken,
+    refreshed,
   };
 }
 
