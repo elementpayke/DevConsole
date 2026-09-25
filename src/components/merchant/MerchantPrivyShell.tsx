@@ -32,7 +32,9 @@ export function MerchantPrivyShell({ children }: { children: ReactNode }) {
     <PrivyProvider
       appId={appId}
       config={{
-        loginMethods: [],
+        // JWT via ConsolePrivyAuthSync (same pattern as dapp). Privy requires ≥1 login
+        // method in config; merchants never open the wallet login modal on this route.
+        loginMethods: ["wallet"],
         embeddedWallets: {
           ethereum: { createOnLogin: "off" },
         },
