@@ -8,16 +8,7 @@ import {
   requireMerchantSession,
   withRefreshedCookies,
 } from "@/lib/server/merchantRoute";
-import type { LinkedWallet } from "@/lib/merchantWallet";
-
-function unwrapWallets(json: unknown): LinkedWallet[] {
-  if (Array.isArray(json)) return json as LinkedWallet[];
-  if (json && typeof json === "object") {
-    const data = (json as { data?: unknown }).data;
-    if (Array.isArray(data)) return data as LinkedWallet[];
-  }
-  return [];
-}
+import { unwrapLinkedWalletsFromApi } from "@/lib/merchantWallet";
 
 export async function GET() {
   const ctx = await requireMerchantSession();
@@ -35,7 +26,7 @@ export async function GET() {
     }
     const json = await upstream.json();
     return withRefreshedCookies(
-      NextResponse.json({ data: unwrapWallets(json) }),
+      NextResponse.json({ data: unwrapLinkedWalletsFromApi(json) }),
       ctx.refreshed,
     );
   } catch (err) {

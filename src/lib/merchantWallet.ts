@@ -17,6 +17,16 @@ export function isValidEvmAddress(value: string): boolean {
   return EVM_ADDRESS.test(value.trim());
 }
 
+/** Normalize aggregator list/envelope responses for merchant account selection. */
+export function unwrapLinkedWalletsFromApi(json: unknown): LinkedWallet[] {
+  if (Array.isArray(json)) return json as LinkedWallet[];
+  if (json && typeof json === "object") {
+    const data = (json as { data?: unknown }).data;
+    if (Array.isArray(data)) return data as LinkedWallet[];
+  }
+  return [];
+}
+
 /** Prefer primary wallet on the treasury chain, else first active wallet. */
 export function selectMerchantTreasuryWallet(
   wallets: LinkedWallet[],
