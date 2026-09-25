@@ -130,6 +130,9 @@ export type PaymentAccountBalance = {
   balance_usdc: number | null;
   currency: string;
   has_account: boolean;
+  /** Treasury address for off-ramp refund/source (session owner only). */
+  address?: string;
+  balance_status?: "ok" | "unavailable" | "no_account";
 };
 
 export async function getMerchantPaymentAccountBalance() {

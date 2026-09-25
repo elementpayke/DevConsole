@@ -16,8 +16,6 @@ import {
   type OfframpQuote,
 } from "@/lib/api/offramp";
 import { ApiError } from "@/lib/api/client";
-import { listLinkedWallets } from "@/lib/api/wallets";
-import { selectMerchantTreasuryWallet } from "@/lib/merchantWallet";
 import { countryDisplayLabel } from "@/lib/countryDisplay";
 import {
   extractCatalogCurrency,
@@ -77,16 +75,39 @@ export default function OfframpPage() {
   const [balanceUsdc, setBalanceUsdc] = useState<number | null | undefined>(
     undefined,
   );
-  const [hasPaymentAccount, setHasPaymentAccount] = useState(true);
+  const [balanceStatus, setBalanceStatus] = useState<
+    "ok" | "unavailable" | "no_account" | "load_failed" | undefined
+  >(undefined);
+  const [loadingPaymentAccount, setLoadingPaymentAccount] = useState(true);
+  const [paymentAccountError, setPaymentAccountError] = useState<string | null>(
+    null,
+  );
 
-  const loadBalance = useCallback(() => {
-    getMerchantPaymentAccountBalance()
+  const loadPaymentAccount = useCallback(() => {
+    setLoadingPaymentAccount(true);
+    setPaymentAccountError(null);
+    return getMerchantPaymentAccountBalance()
       .then((data) => {
         setBalanceUsdc(data.balance_usdc);
-        setHasPaymentAccount(data.has_account);
+        setBalanceStatus(data.balance_status ?? (data.has_account ? "ok" : "no_account"));
+        if (data.has_account && data.address) {
+          setRefundAddress(data.address);
+        } else {
+          setRefundAddress("");
+        }
       })
-      .catch(() => {
+      .catch((err) => {
         setBalanceUsdc(null);
+        setBalanceStatus("load_failed");
+        setRefundAddress("");
+        setPaymentAccountError(
+          err instanceof ApiError
+            ? err.message
+            : "Could not load payment account. Try again.",
+        );
+      })
+      .finally(() => {
+        setLoadingPaymentAccount(false);
       });
   }, []);
 
@@ -104,6 +125,8 @@ export default function OfframpPage() {
           setCountry((prev) =>
             rows.some((r) => r.country === prev) ? prev : rows[0].country,
           );
+        } else {
+          setCountry("");
         }
       })
       .catch((err) => {
@@ -146,21 +169,8 @@ export default function OfframpPage() {
 
   useEffect(() => {
     if (!isMerchant) return;
-    let cancelled = false;
-    listLinkedWallets()
-      .then((res) => {
-        const treasury = selectMerchantTreasuryWallet(res.data ?? []);
-        if (cancelled || !treasury?.address) return;
-        setRefundAddress(treasury.address);
-      })
-      .catch(() => {
-        /* quote will fail with setup hint */
-      });
-    loadBalance();
-    return () => {
-      cancelled = true;
-    };
-  }, [isMerchant, loadBalance]);
+    void loadPaymentAccount();
+  }, [isMerchant, loadPaymentAccount]);
 
   const corridorCurrency = useMemo(() => {
     const row = corridors.find((c) => c.country === country);
@@ -221,7 +231,7 @@ export default function OfframpPage() {
         refund_address: refund,
       });
       setQuote(q);
-      loadBalance();
+      void loadPaymentAccount();
     } catch (err) {
       setError(err instanceof ApiError || err instanceof Error ? err.message : "Quote failed.");
     } finally {
@@ -255,7 +265,7 @@ export default function OfframpPage() {
       } else {
         setOrderStatus("accepted");
       }
-      loadBalance();
+      void loadPaymentAccount();
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Accept failed.");
     } finally {
@@ -280,6 +290,16 @@ export default function OfframpPage() {
   }
 
   const destinationsReady = corridors.length > 0 && !loadingCorridors;
+  const accountReady =
+    !loadingPaymentAccount &&
+    !paymentAccountError &&
+    EVM_ADDRESS_RE.test(refundAddress.trim());
+  const canQuote =
+    destinationsReady &&
+    accountReady &&
+    !loadingCatalog &&
+    !busy &&
+    selectedNetworkId.length > 0;
 
   return (
     <>
@@ -302,21 +322,40 @@ export default function OfframpPage() {
             <span className="text-[13px] font-semibold text-muted">USDC</span>
             <button
               type="button"
-              className="text-[12px] font-semibold text-subtle underline"
-              onClick={() => loadBalance()}
+              className="text-[12px] font-semibold text-subtle underline disabled:opacity-50"
+              disabled={loadingPaymentAccount}
+              onClick={() => void loadPaymentAccount()}
             >
               Refresh
             </button>
           </div>
-          {!hasPaymentAccount && balanceUsdc !== undefined && (
-            <p className="mt-2 text-[12px] text-muted">
-              No payment account linked.{" "}
-              <Link href="/account/setup" className="font-bold underline">
-                Set up account
-              </Link>{" "}
-              and fund USDC on Base from Profile.
+          {loadingPaymentAccount && balanceUsdc === undefined && (
+            <p className="mt-2 text-[12px] text-muted">Loading payment account…</p>
+          )}
+          {paymentAccountError && (
+            <p className="mt-2 text-[12px] text-[oklch(0.55_0.19_25)]">
+              {paymentAccountError}
             </p>
           )}
+          {!loadingPaymentAccount &&
+            !paymentAccountError &&
+            balanceStatus === "no_account" && (
+              <p className="mt-2 text-[12px] text-muted">
+                No payment account linked.{" "}
+                <Link href="/account/setup" className="font-bold underline">
+                  Set up account
+                </Link>{" "}
+                and fund USDC on Base from Profile.
+              </p>
+            )}
+          {!loadingPaymentAccount &&
+            !paymentAccountError &&
+            balanceStatus === "unavailable" && (
+              <p className="mt-2 text-[12px] text-muted">
+                Balance could not be read from Base. Check{" "}
+                <code className="text-[11px]">BASE_RPC_URL</code> or try Refresh.
+              </p>
+            )}
         </GlassCard>
 
         {error && (
@@ -338,14 +377,17 @@ export default function OfframpPage() {
                   clearQuoteBoundFields(setQuote, setOrderId, setOrderStatus);
                 }}
               >
-                {(corridors.length
-                  ? corridors
-                  : [{ country: "TZ", currency: "TZS" }]
-                ).map((c) => (
-                  <option key={c.country} value={c.country}>
-                    {countryDisplayLabel(c.country, c.currency)}
+                {corridors.length === 0 ? (
+                  <option value="">
+                    {loadingCorridors ? "Loading…" : "No destinations available"}
                   </option>
-                ))}
+                ) : (
+                  corridors.map((c) => (
+                    <option key={c.country} value={c.country}>
+                      {countryDisplayLabel(c.country, c.currency)}
+                    </option>
+                  ))
+                )}
               </select>
             </label>
             <label className="block text-[12px] font-semibold text-faint">
@@ -436,11 +478,8 @@ export default function OfframpPage() {
             </div>
           )}
 
-          <Button
-            onClick={handleQuote}
-            disabled={busy || loadingCatalog || loadingCorridors || !destinationsReady}
-          >
-            {busy ? "Working…" : "Get quote"}
+          <Button onClick={handleQuote} disabled={!canQuote}>
+            {busy ? "Working…" : loadingPaymentAccount ? "Loading account…" : "Get quote"}
           </Button>
         </GlassCard>
 

@@ -36,19 +36,27 @@ export async function GET() {
     if (!wallet?.address) {
       return withRefreshedCookies(
         NextResponse.json({
-          data: { balance_usdc: null, currency: "USDC", has_account: false },
+          data: {
+            balance_usdc: null,
+            currency: "USDC",
+            has_account: false,
+            balance_status: "no_account",
+          },
         }),
         ctx.refreshed,
       );
     }
 
     const balance = await fetchUsdcBalanceOnBase(wallet.address, getBaseRpcUrl());
+    const balanceStatus = balance === null ? "unavailable" : "ok";
     return withRefreshedCookies(
       NextResponse.json({
         data: {
           balance_usdc: balance,
           currency: "USDC",
           has_account: true,
+          address: wallet.address,
+          balance_status: balanceStatus,
         },
       }),
       ctx.refreshed,
