@@ -2,7 +2,7 @@ import { apiFetch } from "./client";
 import type { LinkedWallet } from "@/lib/merchantWallet";
 
 export function listLinkedWallets() {
-  return apiFetch<LinkedWallet[]>("/auth/wallets", {
+  return apiFetch<{ data: LinkedWallet[] }>("/auth/wallets", {
     unwrap: false,
     absolutePath: "/api/auth/wallets",
   });

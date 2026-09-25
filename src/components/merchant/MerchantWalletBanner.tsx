@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { listLinkedWallets } from "@/lib/api/wallets";
-import { selectMerchantTreasuryWallet, type LinkedWallet } from "@/lib/merchantWallet";
+import { selectMerchantTreasuryWallet } from "@/lib/merchantWallet";
 import { useMerchantExperience } from "@/lib/auth/useMerchantExperience";
 
 type BannerState =
@@ -19,10 +19,9 @@ export function MerchantWalletBanner() {
   useEffect(() => {
     if (!isMerchant) return;
     let cancelled = false;
-    setState({ kind: "loading" });
     listLinkedWallets()
       .then((res) => {
-        const rows = (res as { data?: LinkedWallet[] }).data ?? [];
+        const rows = res.data ?? [];
         const treasury = selectMerchantTreasuryWallet(rows);
         if (!cancelled) {
           setState(treasury ? { kind: "linked" } : { kind: "missing" });

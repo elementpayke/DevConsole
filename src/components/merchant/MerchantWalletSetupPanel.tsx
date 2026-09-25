@@ -28,28 +28,41 @@ export function MerchantWalletSetupPanel() {
   const [pendingLink, setPendingLink] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const refreshLinked = useCallback(async () => {
-    setLoading(true);
-    try {
-      const res = (await listLinkedWallets()) as { data?: LinkedWallet[] };
-      const rows = Array.isArray(res?.data) ? res.data : [];
-      setLinked(selectMerchantTreasuryWallet(rows));
-      setError(null);
-    } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Failed to load account status");
-    } finally {
-      setLoading(false);
-    }
+  const embeddedAddr = embeddedAddress(privyWallets);
+
+  const fetchTreasuryWallet = useCallback(async () => {
+    const res = await listLinkedWallets();
+    const rows = Array.isArray(res.data) ? res.data : [];
+    return selectMerchantTreasuryWallet(rows);
   }, []);
 
   useEffect(() => {
-    void refreshLinked();
-  }, [refreshLinked]);
+    let cancelled = false;
+    fetchTreasuryWallet()
+      .then((treasury) => {
+        if (!cancelled) {
+          setLinked(treasury);
+          setError(null);
+        }
+      })
+      .catch((err) => {
+        if (!cancelled) {
+          setError(
+            err instanceof ApiError ? err.message : "Failed to load account status",
+          );
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [fetchTreasuryWallet]);
 
   useEffect(() => {
     if (!pendingLink) return;
-    const address = embeddedAddress(privyWallets);
-    if (!address) {
+    if (!embeddedAddr) {
       const timeout = window.setTimeout(() => {
         setError(
           "Account setup is taking longer than expected. Refresh the page and try again.",
@@ -64,11 +77,13 @@ export function MerchantWalletSetupPanel() {
     (async () => {
       try {
         await connectLinkedWallet({
-          address,
+          address: embeddedAddr,
           chain: MERCHANT_TREASURY_CHAIN,
         });
         if (cancelled) return;
-        await refreshLinked();
+        const treasury = await fetchTreasuryWallet();
+        if (cancelled) return;
+        setLinked(treasury);
         setPendingLink(false);
         router.push("/dashboard");
       } catch (err) {
@@ -89,7 +104,7 @@ export function MerchantWalletSetupPanel() {
     return () => {
       cancelled = true;
     };
-  }, [pendingLink, privyWallets, refreshLinked, router]);
+  }, [pendingLink, embeddedAddr, fetchTreasuryWallet, router]);
 
   async function handleSetup() {
     setBusy(true);

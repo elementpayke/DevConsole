@@ -45,15 +45,21 @@ export async function POST(req: NextRequest) {
     }
 
     if (!upstream.ok) {
-      return nextResponseFromUpstream(upstream);
+      return withRefreshedCookies(
+        await nextResponseFromUpstream(upstream),
+        refreshed,
+      );
     }
 
     const json = (await upstream.json()) as { token?: string; data?: { token?: string } };
     const token = json.token ?? json.data?.token;
     if (!token || typeof token !== "string") {
-      return NextResponse.json(
-        { message: "Account setup is temporarily unavailable." },
-        { status: 502 },
+      return withRefreshedCookies(
+        NextResponse.json(
+          { message: "Account setup is temporarily unavailable." },
+          { status: 502 },
+        ),
+        refreshed,
       );
     }
 
