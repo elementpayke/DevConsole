@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { EnvBadge } from "@/components/layout/EnvBadge";
+import { EnvSwitchLink } from "@/components/layout/EnvSwitchLink";
 
 function ShieldCheckIcon() {
   return (
@@ -31,8 +32,9 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
             <NavLink>Console</NavLink>
           </nav>
         </div>
-        <div className="flex shrink-0 items-center gap-3 sm:gap-5">
+        <div className="flex shrink-0 flex-wrap items-center justify-end gap-2 sm:gap-3 sm:gap-5">
           <EnvBadge />
+          <EnvSwitchLink />
           <Link
             href="/login"
             className="hidden text-[13.5px] font-semibold whitespace-nowrap text-ink hover:text-primary sm:inline-block"

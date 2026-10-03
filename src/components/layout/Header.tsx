@@ -1,5 +1,6 @@
 import { colors } from "@/lib/theme";
 import { EnvBadge } from "./EnvBadge";
+import { EnvSwitchLink } from "./EnvSwitchLink";
 import { useEnvironment } from "@/lib/env/EnvContext";
 
 export function Header({
@@ -30,7 +31,12 @@ export function Header({
             All systems operational
           </div>
         )}
-        {showEnvBadge && <EnvBadge />}
+        {showEnvBadge && (
+          <>
+            <EnvBadge />
+            <EnvSwitchLink />
+          </>
+        )}
       </div>
     </header>
   );
