@@ -33,6 +33,8 @@ Open [http://localhost:3000](http://localhost:3000).
 | `FE_CLIENT_SECRET` | **No** (server only) | Shared with aggregator; sent as `X-FE-Client-Secret` |
 | `AGGREGATOR_BASE_URL` | **No** (server only) | Aggregator API root, e.g. `https://sandbox.elementpay.net/api/v1` |
 | `NEXT_PUBLIC_ENVIRONMENT` | Yes | `sandbox` or `live` badge in the UI |
+| `NEXT_PUBLIC_LIVE_CONSOLE_URL` | Yes | Live console origin; sandbox shows “Log in to Live” |
+| `NEXT_PUBLIC_SANDBOX_CONSOLE_URL` | Yes | Sandbox console origin; live shows “Log in to Sandbox” |
 | `NEXT_PUBLIC_TURNSTILE_SITE_KEY` | Yes | Cloudflare Turnstile site key; widget omitted when empty |
 
 ### Cloudflare Turnstile
