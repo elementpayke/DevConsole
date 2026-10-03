@@ -14,6 +14,7 @@ Browser → /api/auth/*     → Aggregator (+ X-FE-Client-Secret; sets httpOnly 
 Browser → /api/proxy/...  → Aggregator (+ secret + Bearer from cookie)
 ```
 
+
 ## Getting Started
 
 ```bash
