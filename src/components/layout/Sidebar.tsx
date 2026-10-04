@@ -1,14 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/lib/auth/AuthContext";
-import { useMerchantExperience } from "@/lib/auth/useMerchantExperience";
 import { useRail } from "@/lib/layout/RailContext";
-
-const DEV_TOOLS_KEY = "ep-dev-tools-revealed";
 
 function NavIcon({ d }: { d: React.ReactNode }) {
   return (
@@ -102,32 +99,16 @@ export function Sidebar() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const { user, logout } = useAuth();
-  const { isMerchant } = useMerchantExperience();
   const { railOpen, toggleRail, mobileOpen, closeMobile } = useRail();
   const [checkoutOpen, setCheckoutOpen] = useState(true);
-  // Starts false (matches SSR) and syncs from sessionStorage after mount to avoid
-  // a hydration mismatch on the API Keys/Reference links this flag gates.
-  const [devToolsRevealed, setDevToolsRevealed] = useState(false);
-
-  useEffect(() => {
-    // Sync session flag after hydration; SSR snapshot hides merchant-only links.
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    if (window.sessionStorage.getItem(DEV_TOOLS_KEY) === "true") setDevToolsRevealed(true);
-  }, []);
 
   const initial = (user?.email?.[0] ?? "?").toUpperCase();
-  const showDevTools = !isMerchant || devToolsRevealed;
   const onCheckout = pathname.startsWith("/checkout");
   const activeCheckoutTab = searchParams.get("tab") ?? "links";
 
   async function handleSignOut() {
     await logout();
     router.push("/login");
-  }
-
-  function revealDevTools() {
-    window.sessionStorage.setItem(DEV_TOOLS_KEY, "true");
-    setDevToolsRevealed(true);
   }
 
   function navLinkClass(active: boolean) {
@@ -162,7 +143,7 @@ export function Sidebar() {
               className="flex-shrink-0 rounded-[5px] px-1.5 py-0.5 text-[10px] font-bold"
               style={{ background: "var(--indigo-tint)", color: "var(--indigo-text)" }}
             >
-              Merchant
+              Console
             </span>
           </>
         )}
@@ -253,41 +234,26 @@ export function Sidebar() {
           </div>
         )}
 
-        {showDevTools && (
-          <>
-            <Link
-              href="/api-keys"
-              onClick={closeMobile}
-              className={navLinkClass(pathname.startsWith("/api-keys"))}
-              style={navLinkStyle(pathname.startsWith("/api-keys"))}
-              title={railOpen ? undefined : "API Keys"}
-            >
-              <NavIcon d={ICONS.keys} />
-              {railOpen && <span className="truncate">API Keys</span>}
-            </Link>
-            <Link
-              href="/reference"
-              onClick={closeMobile}
-              className={navLinkClass(pathname.startsWith("/reference"))}
-              style={navLinkStyle(pathname.startsWith("/reference"))}
-              title={railOpen ? undefined : "Reference"}
-            >
-              <NavIcon d={ICONS.reference} />
-              {railOpen && <span className="truncate">Reference</span>}
-            </Link>
-          </>
-        )}
-        {!showDevTools && (
-          <button
-            type="button"
-            onClick={revealDevTools}
-            className="mt-1.5 flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left text-[12px] font-semibold"
-            style={{ color: "var(--rail-dim)" }}
-          >
-            <span className="font-mono text-[11px]">{"{ }"}</span>
-            {railOpen && <span>Developer tools</span>}
-          </button>
-        )}
+        <Link
+          href="/api-keys"
+          onClick={closeMobile}
+          className={navLinkClass(pathname.startsWith("/api-keys"))}
+          style={navLinkStyle(pathname.startsWith("/api-keys"))}
+          title={railOpen ? undefined : "API Keys"}
+        >
+          <NavIcon d={ICONS.keys} />
+          {railOpen && <span className="truncate">API Keys</span>}
+        </Link>
+        <Link
+          href="/reference"
+          onClick={closeMobile}
+          className={navLinkClass(pathname.startsWith("/reference"))}
+          style={navLinkStyle(pathname.startsWith("/reference"))}
+          title={railOpen ? undefined : "Reference"}
+        >
+          <NavIcon d={ICONS.reference} />
+          {railOpen && <span className="truncate">Reference</span>}
+        </Link>
       </nav>
 
       <div className="mt-auto flex flex-col gap-0.5 px-2 pb-2.5 pt-2" style={{ borderTop: "1px solid var(--rail-line)" }}>

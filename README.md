@@ -70,7 +70,19 @@ the BFF supplies the secret (Origin check is skipped on that path).
 
 ```bash
 npm run lint
+npm run typecheck
 npm run test          # unit + security checks
 npm run test:security # secret-leak / cookie flag checks
 npm run build
 ```
+
+## Real vs coming soon
+
+**Wired to the aggregator today:** auth/session, dashboard, transactions, API keys,
+reference tokens, merchant onboarding / vault attach, wallets balance (when linked),
+off-ramp quote/accept.
+
+**Coming soon (UI only — no live shareable links):** Checkout payment links, invoices,
+embed SDK, Paybill account numbers, team invites, alert destinations, payment-method
+toggles. Do not treat those screens as live money movement until collect-profile APIs
+ship.

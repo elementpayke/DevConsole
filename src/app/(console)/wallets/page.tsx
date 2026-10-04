@@ -54,12 +54,28 @@ export default function WalletsPage() {
     return (
       <>
         <Header title="Wallets" />
-        <div className="p-7">
-          <p className="text-sm" style={{ color: "var(--muted)" }}>
-            Wallets are part of the merchant Off-ramp experience. Developer accounts manage
-            crypto via the API — see{" "}
+        <div className="flex flex-col gap-3 p-5 md:p-7">
+          <p className="m-0 text-[13px] leading-relaxed" style={{ color: "var(--muted)" }}>
+            Link a payout wallet to collect and withdraw once your account has a collect profile
+            with a vault customer. Until then you can still use{" "}
+            <Link href="/api-keys" style={{ color: "var(--indigo)" }}>API Keys</Link>
+            {" "}and the{" "}
             <Link href="/reference" style={{ color: "var(--indigo)" }}>API reference</Link>.
           </p>
+          <div
+            className="rounded-lg px-3 py-2.5 text-[12.5px] leading-relaxed"
+            style={{ background: "var(--warn-bg)", color: "var(--warn-text)", maxWidth: 520 }}
+          >
+            Setup required — complete merchant onboarding (or attach a vault customer) to manage
+            balances here.
+          </div>
+          <Link
+            href="/onboarding"
+            className="w-fit rounded-lg px-4 py-2.5 text-[13px] font-bold no-underline"
+            style={{ background: "var(--indigo)", color: "var(--on-indigo)" }}
+          >
+            Start setup
+          </Link>
         </div>
       </>
     );
