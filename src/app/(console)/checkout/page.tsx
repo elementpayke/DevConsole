@@ -43,9 +43,9 @@ function CheckoutContent() {
             ⌸
           </span>
           <span className="flex min-w-[180px] flex-1 flex-col gap-0.5">
-            <span className="text-[13.5px] font-bold">Paybill (coming soon)</span>
+            <span className="text-[13.5px] font-bold">Paybill account numbers</span>
             <span className="text-[12px]" style={{ color: "var(--muted)" }}>
-              In-person M-Pesa collections will land here after paybill references are provisioned.
+              Generate account references for in-person M-Pesa collections (ops still provisions the shared paybill).
             </span>
           </span>
           <span className="text-[12.5px] font-bold" style={{ color: "var(--indigo-text)" }}>
