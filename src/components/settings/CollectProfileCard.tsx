@@ -62,7 +62,9 @@ export function CollectProfileCard() {
       <GlassCard className="p-[22px]">
         <div className="mb-1 text-[14.5px] font-bold">Collect profile</div>
         <p className="mb-4 text-[12.5px]" style={{ color: "var(--muted)" }}>
-          Public checkout lives at your shop slug. Roles are unchanged — this is additive storefront identity.
+          {profile.kind === "company"
+            ? "KYC uses you as the chosen director — enough for company collect. Settlements go to that director’s vault/wallet."
+            : "KYC and settlements use your account as the shop owner."}
         </p>
         <div className="grid grid-cols-2 gap-3.5">
           <div>
@@ -72,6 +74,13 @@ export function CollectProfileCard() {
           <div>
             <div className="mb-1.5 text-[11px] font-bold tracking-wide text-faint uppercase">Kind</div>
             <div className="text-[13px]">{profile.kind}</div>
+          </div>
+          <div>
+            <div className="mb-1.5 text-[11px] font-bold tracking-wide text-faint uppercase">KYC subject</div>
+            <div className="text-[13px]">
+              {profile.kyc_subject_role ?? (profile.kind === "company" ? "director" : "owner")}
+              {profile.kyc_verified ? " · verified" : " · pending"}
+            </div>
           </div>
           <div className="col-span-2">
             <div className="mb-1.5 text-[11px] font-bold tracking-wide text-faint uppercase">Public URL</div>
@@ -86,7 +95,8 @@ export function CollectProfileCard() {
     <GlassCard className="p-[22px]">
       <div className="mb-1 text-[14.5px] font-bold">Start collecting</div>
       <p className="mb-4 text-[12.5px]" style={{ color: "var(--muted)" }}>
-        Create a solo shop or company profile to get elementpay.net/&#123;slug&#125; and payment links.
+        Create a solo shop or company profile for elementpay.net/&#123;slug&#125;. For a company, you are the
+        chosen director for KYC — we treat collections as settling to you.
       </p>
       <form onSubmit={onCreate} className="flex flex-col gap-3.5">
         <label className="flex flex-col gap-1.5 text-[11.5px] font-semibold" style={{ color: "var(--muted)" }}>

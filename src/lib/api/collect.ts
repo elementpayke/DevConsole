@@ -12,6 +12,10 @@ export type CollectProfile = {
   allow_mpesa: boolean;
   allow_cards: boolean;
   allow_stable: boolean;
+  /** Solo owner or chosen company director — KYC + settlement subject. */
+  kyc_subject_user_id?: number | null;
+  kyc_subject_role?: string | null;
+  kyc_verified?: boolean;
 };
 
 export type PaymentLink = {
