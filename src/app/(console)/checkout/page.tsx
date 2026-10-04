@@ -62,7 +62,7 @@ function CheckoutContent() {
               Customer pays with
             </span>
             <span className="flex flex-wrap gap-1.5">
-              {["M-Pesa · Mobile money", "Visa · Cards", "USDC · USDT too"].map((label) => (
+              {["M-Pesa · STK", "Cards · Coming soon"].map((label) => (
                 <span
                   key={label}
                   className="rounded-lg px-2.5 py-1.5 text-[11.5px]"
