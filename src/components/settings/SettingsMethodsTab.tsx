@@ -127,7 +127,7 @@ export function SettingsMethodsTab() {
       allow_stable: profile.allow_stable,
     };
     if (!next.allow_mpesa && !next.allow_stable) {
-      setError("Keep at least mobile money or USDC/USDT enabled");
+      setError("Keep at least mobile money or USDC enabled");
       return;
     }
     setSaving(true);
@@ -149,7 +149,7 @@ export function SettingsMethodsTab() {
       allow_stable: !profile.allow_stable,
     };
     if (!next.allow_mpesa && !next.allow_stable) {
-      setError("Keep at least mobile money or USDC/USDT enabled");
+      setError("Keep at least mobile money or USDC enabled");
       return;
     }
     setSaving(true);
@@ -166,9 +166,11 @@ export function SettingsMethodsTab() {
   return (
     <div className="flex max-w-[720px] flex-col gap-5">
       <p className="m-0 text-[12.5px]" style={{ color: "var(--muted)" }}>
-        Supported collect countries and methods come from the partner OnRamp catalog.
-        Hosted checkout today collects via M-Pesa STK in Kenya; other corridors show as
-        catalog-supported. Cards stay hidden from customers until live.
+        Fiat corridors come from the partner OnRamp catalog. Hosted checkout: M-Pesa STK
+        (Kenya) still settles to your linked EVM wallet for now; USDC checkout homes to
+        Stellar (customers pick the source chain and pay bridge fees). You do not pick a
+        collect destination chain per link — withdraw/offramp chooses Base, bank, or M-Pesa
+        later. Cards and USDT stay off customer checkout.
       </p>
       {error && <p className="m-0 text-[12.5px]" style={{ color: "var(--bad-text)" }}>{error}</p>}
       {catalogError && (
