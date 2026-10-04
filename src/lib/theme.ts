@@ -48,6 +48,40 @@ export const colors = {
   methodGet: "oklch(0.5 0.14 152)",
   methodPost: "#352ab0",
   methodOther: "oklch(0.5 0.012 264)",
+
+  /** CSS custom properties — read these via var(--token) so values track
+   * the active [data-theme] rather than being frozen at light-mode oklch. */
+  var: {
+    ink: "var(--ink)",
+    muted: "var(--muted)",
+    faint: "var(--faint)",
+    line: "var(--line)",
+    border: "var(--border)",
+    borderStrong: "var(--border-strong)",
+    surface: "var(--surface)",
+    surfaceSoft: "var(--surface-soft)",
+    panel: "var(--panel)",
+    indigo: "var(--indigo)",
+    indigoText: "var(--indigo-text)",
+    indigoTint: "var(--indigo-tint)",
+    indigoSoft: "var(--indigo-soft)",
+    onIndigo: "var(--on-indigo)",
+    okBg: "var(--ok-bg)",
+    okText: "var(--ok-text)",
+    warnBg: "var(--warn-bg)",
+    warnText: "var(--warn-text)",
+    badBg: "var(--bad-bg)",
+    badText: "var(--bad-text)",
+    codeBg: "var(--code-bg)",
+    codeText: "var(--code-text)",
+    codeLine: "var(--code-line)",
+    rail: "var(--rail)",
+    railLine: "var(--rail-line)",
+    railText: "var(--rail-text)",
+    railMuted: "var(--rail-muted)",
+    railDim: "var(--rail-dim)",
+    envBand: "var(--env-band)",
+  },
 } as const;
 
 export const STATUS_STYLE: Record<string, { bg: string; text: string }> = {

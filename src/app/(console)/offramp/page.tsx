@@ -3,7 +3,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { Header } from "@/components/layout/Header";
-import { GlassCard } from "@/components/ui/GlassCard";
 import { Button } from "@/components/ui/Button";
 import { useMerchantExperience } from "@/lib/auth/useMerchantExperience";
 import {
@@ -301,12 +300,12 @@ export default function OfframpPage() {
       <>
         <Header title="Off-ramp" />
         <div className="p-7">
-          <GlassCard className="p-6">
-            <p className="text-sm text-muted">
+          <section className="rounded-xl p-6" style={{ background: "var(--panel)", border: "1px solid var(--border)" }}>
+            <p className="text-sm" style={{ color: "var(--muted)" }}>
               Off-ramp withdraw is available for merchant accounts. Contact ElementPay
               ops if you need access.
             </p>
-          </GlassCard>
+          </section>
         </div>
       </>
     );
@@ -338,7 +337,7 @@ export default function OfframpPage() {
           markets.
         </p>
 
-        <GlassCard className="mb-4 p-5">
+        <section className="mb-4 rounded-xl p-5" style={{ background: "var(--panel)", border: "1px solid var(--border)" }}>
           <div className="text-[11px] font-bold tracking-wide text-faint uppercase">
             Available balance
           </div>
@@ -349,7 +348,8 @@ export default function OfframpPage() {
             <span className="text-[13px] font-semibold text-muted">USDC</span>
             <button
               type="button"
-              className="text-[12px] font-semibold text-subtle underline disabled:opacity-50"
+              className="text-[12px] font-semibold underline disabled:opacity-50"
+              style={{ color: "var(--indigo-text)" }}
               disabled={loadingPaymentAccount}
               onClick={() => void loadPaymentAccount()}
             >
@@ -360,7 +360,7 @@ export default function OfframpPage() {
             <p className="mt-2 text-[12px] text-muted">Loading payment account…</p>
           )}
           {paymentAccountError && (
-            <p className="mt-2 text-[12px] text-[oklch(0.55_0.19_25)]">
+            <p className="mt-2 text-[12px]" style={{ color: "var(--bad-text)" }}>
               {paymentAccountError}
             </p>
           )}
@@ -383,20 +383,24 @@ export default function OfframpPage() {
                 <code className="text-[11px]">BASE_RPC_URL</code> or try Refresh.
               </p>
             )}
-        </GlassCard>
+        </section>
 
         {error && (
-          <p className="mb-4 rounded-lg border border-line-strong bg-white p-3 text-[13px] text-[oklch(0.55_0.19_25)]">
+          <p
+            className="mb-4 rounded-lg border border-line-strong p-3 text-[13px]"
+            style={{ background: "var(--panel)", color: "var(--bad-text)" }}
+          >
             {error}
           </p>
         )}
 
-        <GlassCard className="mb-4 space-y-4 p-5">
+        <section className="mb-4 space-y-4 rounded-xl p-5" style={{ background: "var(--panel)", border: "1px solid var(--border)" }}>
           <div className="grid grid-cols-2 gap-3">
             <label className="block text-[12px] font-semibold text-faint">
               Country
               <select
-                className="mt-1 w-full rounded-lg border border-line bg-white px-3 py-2 text-[13px]"
+                className="mt-1 w-full rounded-lg px-3 py-2 text-[13px]"
+                style={{ border: "1px solid var(--border-strong)", background: "var(--panel-solid)" }}
                 value={country}
                 disabled={!destinationsReady}
                 onChange={(e) => {
@@ -420,7 +424,8 @@ export default function OfframpPage() {
             <label className="block text-[12px] font-semibold text-faint">
               Amount (USDC)
               <input
-                className="mt-1 w-full rounded-lg border border-line bg-white px-3 py-2 text-[13px] mono"
+                className="mono mt-1 w-full rounded-lg px-3 py-2 text-[13px]"
+                style={{ border: "1px solid var(--border-strong)", background: "var(--panel-solid)" }}
                 value={cryptoAmount}
                 onChange={(e) => {
                   setCryptoAmount(e.target.value);
@@ -453,7 +458,8 @@ export default function OfframpPage() {
                 <label className="block text-[12px] font-semibold text-faint">
                   Destination type
                   <select
-                    className="mt-1 w-full rounded-lg border border-line bg-white px-3 py-2 text-[13px]"
+                    className="mt-1 w-full rounded-lg px-3 py-2 text-[13px]"
+                style={{ border: "1px solid var(--border-strong)", background: "var(--panel-solid)" }}
                     value={activeMethod}
                     onChange={(e) => {
                       setMethod(e.target.value as DestinationMethod);
@@ -473,7 +479,8 @@ export default function OfframpPage() {
                 <label className="block text-[12px] font-semibold text-faint">
                   Provider
                   <select
-                    className="mt-1 w-full rounded-lg border border-line bg-white px-3 py-2 text-[13px]"
+                    className="mt-1 w-full rounded-lg px-3 py-2 text-[13px]"
+                style={{ border: "1px solid var(--border-strong)", background: "var(--panel-solid)" }}
                     value={selectedNetworkId}
                     onChange={(e) => {
                       setNetworkId(e.target.value);
@@ -495,7 +502,8 @@ export default function OfframpPage() {
             <label className="block text-[12px] font-semibold text-faint">
               Phone (E.164)
               <input
-                className="mt-1 w-full rounded-lg border border-line bg-white px-3 py-2 text-[13px] mono"
+                className="mono mt-1 w-full rounded-lg px-3 py-2 text-[13px]"
+                style={{ border: "1px solid var(--border-strong)", background: "var(--panel-solid)" }}
                 placeholder="+255…"
                 value={phone}
                 onChange={(e) => {
@@ -509,7 +517,8 @@ export default function OfframpPage() {
               <label className="block text-[12px] font-semibold text-faint">
                 Account number
                 <input
-                  className="mt-1 w-full rounded-lg border border-line bg-white px-3 py-2 text-[13px] mono"
+                  className="mono mt-1 w-full rounded-lg px-3 py-2 text-[13px]"
+                style={{ border: "1px solid var(--border-strong)", background: "var(--panel-solid)" }}
                   value={accountNumber}
                   onChange={(e) => {
                     setAccountNumber(e.target.value);
@@ -520,7 +529,8 @@ export default function OfframpPage() {
               <label className="block text-[12px] font-semibold text-faint">
                 Account name
                 <input
-                  className="mt-1 w-full rounded-lg border border-line bg-white px-3 py-2 text-[13px]"
+                  className="mt-1 w-full rounded-lg px-3 py-2 text-[13px]"
+                style={{ border: "1px solid var(--border-strong)", background: "var(--panel-solid)" }}
                   value={accountName}
                   onChange={(e) => {
                     setAccountName(e.target.value);
@@ -534,10 +544,10 @@ export default function OfframpPage() {
           <Button onClick={handleQuote} disabled={!canQuote}>
             {busy ? "Working…" : loadingPaymentAccount ? "Loading account…" : "Get quote"}
           </Button>
-        </GlassCard>
+        </section>
 
         {quote && (
-          <GlassCard className="mb-4 space-y-3 p-5">
+          <section className="mb-4 space-y-3 rounded-xl p-5" style={{ background: "var(--panel)", border: "1px solid var(--border)" }}>
             <div className="text-[14.5px] font-bold">Quote</div>
             <div className="grid grid-cols-2 gap-3 text-[13px]">
               <div>
@@ -570,15 +580,15 @@ export default function OfframpPage() {
             <Button onClick={handleAccept} disabled={busy || !!orderId}>
               {orderId ? "Accepted" : "Confirm withdraw"}
             </Button>
-          </GlassCard>
+          </section>
         )}
 
         {orderId && (
-          <GlassCard className="p-5">
+          <section className="rounded-xl p-5" style={{ background: "var(--panel)", border: "1px solid var(--border)" }}>
             <div className="text-[14.5px] font-bold">Order status</div>
-            <p className="mt-2 mono text-[13px]">{orderId}</p>
+            <p className="mono mt-2 text-[13px]">{orderId}</p>
             <p className="mt-1 text-[13px] text-muted">{orderStatus ?? "processing"}</p>
-          </GlassCard>
+          </section>
         )}
       </div>
     </>

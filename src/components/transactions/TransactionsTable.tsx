@@ -31,7 +31,7 @@ export function TransactionsTable({
         className={`w-full border-collapse ${fiatFirst ? "min-w-[720px]" : "min-w-[920px]"}`}
       >
         <thead>
-          <tr style={{ background: "oklch(0.98 0.003 264)" }}>
+          <tr style={{ background: "var(--surface-soft)" }}>
             {headers.map((h, i) => {
               const rightAlign = fiatFirst
                 ? h === "Fiat amount"
@@ -56,7 +56,7 @@ export function TransactionsTable({
               <tr
                 key={order.order_id}
                 onClick={() => onSelect(order)}
-                className="cursor-pointer hover:bg-[oklch(0.98_0.003_264)]"
+                className="cursor-pointer hover:bg-surface-soft"
               >
                 <td className="mono border-t border-line-soft px-[18px] py-3.5 text-[12.5px] font-semibold">
                   {order.order_id.slice(0, 10)}

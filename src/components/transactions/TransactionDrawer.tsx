@@ -5,7 +5,10 @@ import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { colors, statusStyle } from "@/lib/theme";
 import { downloadOrderReceipt } from "@/lib/export/receiptPdf";
+import { RefundModal } from "@/components/transactions/RefundModal";
 import type { Order } from "@/lib/types";
+
+const REFUNDABLE_STATUSES: Order["status"][] = ["settled", "completed", "settled_unverified"];
 
 type TimelineStep = { label: string; time: string; dotColor: string };
 
@@ -49,6 +52,8 @@ export function TransactionDrawer({
   const style = statusStyle(order.status);
   const timeline = buildTimeline(order, fiatFirst);
   const [includeCrypto, setIncludeCrypto] = useState(!fiatFirst);
+  const [refunding, setRefunding] = useState(false);
+  const canRefund = REFUNDABLE_STATUSES.includes(order.status);
 
   return (
     <>
@@ -132,22 +137,16 @@ export function TransactionDrawer({
                 <button
                   type="button"
                   onClick={() => setIncludeCrypto(false)}
-                  className={`cursor-pointer rounded-md px-2.5 py-2 text-[12.5px] font-bold transition-colors ${
-                    !includeCrypto
-                      ? "bg-white text-ink shadow-sm"
-                      : "bg-transparent text-muted hover:text-ink"
-                  }`}
+                  className="cursor-pointer rounded-md px-2.5 py-2 text-[12.5px] font-bold transition-colors text-ink"
+                  style={!includeCrypto ? { background: "var(--panel)", boxShadow: "0 1px 2px rgba(0,0,0,0.08)" } : { background: "transparent", color: "var(--muted)" }}
                 >
                   Fiat only
                 </button>
                 <button
                   type="button"
                   onClick={() => setIncludeCrypto(true)}
-                  className={`cursor-pointer rounded-md px-2.5 py-2 text-[12.5px] font-bold transition-colors ${
-                    includeCrypto
-                      ? "bg-white text-ink shadow-sm"
-                      : "bg-transparent text-muted hover:text-ink"
-                  }`}
+                  className="cursor-pointer rounded-md px-2.5 py-2 text-[12.5px] font-bold transition-colors text-ink"
+                  style={includeCrypto ? { background: "var(--panel)", boxShadow: "0 1px 2px rgba(0,0,0,0.08)" } : { background: "transparent", color: "var(--muted)" }}
                 >
                   With crypto
                 </button>
@@ -161,6 +160,11 @@ export function TransactionDrawer({
             >
               Download receipt PDF
             </Button>
+            {canRefund && (
+              <Button type="button" variant="secondary" className="mt-2 w-full" onClick={() => setRefunding(true)}>
+                Refund
+              </Button>
+            )}
           </div>
 
           <div className="mb-5 border-t border-line pt-[18px]">
@@ -182,6 +186,8 @@ export function TransactionDrawer({
           </div>
         </div>
       </div>
+
+      {refunding && <RefundModal order={order} onClose={() => setRefunding(false)} />}
     </>
   );
 }

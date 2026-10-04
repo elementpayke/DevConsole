@@ -1,6 +1,8 @@
 import Image from "next/image";
 import Link from "next/link";
 import { EnvBadge } from "@/components/layout/EnvBadge";
+import { EnvSwitchLink } from "@/components/layout/EnvSwitchLink";
+import { CheckoutSimPanel } from "@/components/auth/CheckoutSimPanel";
 
 function ShieldCheckIcon() {
   return (
@@ -11,51 +13,43 @@ function ShieldCheckIcon() {
   );
 }
 
-function NavLink({ children }: { children: React.ReactNode }) {
-  return <span className="text-[13.5px] font-semibold text-muted cursor-default">{children}</span>;
-}
-
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex min-h-dvh flex-col bg-white">
-      <header className="flex items-center justify-between gap-3 border-b border-line px-4 py-4 sm:px-8">
-        <div className="flex items-center gap-9">
-          <Link href="/login" className="flex shrink-0 items-center gap-2.5">
-            <Image src="/elementpay-logo.png" alt="ElementPay" width={26} height={26} />
-            <span className="text-base font-extrabold tracking-tight text-ink">ElementPay</span>
-          </Link>
-          <nav className="hidden items-center gap-7 md:flex">
-            <NavLink>Services</NavLink>
-            <NavLink>Blog</NavLink>
-            <NavLink>Documentation</NavLink>
-            <NavLink>Console</NavLink>
-          </nav>
-        </div>
-        <div className="flex shrink-0 items-center gap-3 sm:gap-5">
-          <EnvBadge />
-          <Link
-            href="/login"
-            className="hidden text-[13.5px] font-semibold whitespace-nowrap text-ink hover:text-primary sm:inline-block"
-          >
-            Sign in
-          </Link>
-          <Link
-            href="/register"
-            className="inline-flex items-center gap-2 rounded-lg bg-primary px-3 py-2.5 text-[12.5px] font-bold whitespace-nowrap text-white hover:bg-primary-hover sm:px-4 sm:text-[13px]"
-          >
-            Get started
-          </Link>
+    <div
+      className="flex min-h-dvh flex-col"
+      style={{
+        background: "var(--indigo-tint)",
+        backgroundImage: "radial-gradient(rgba(67,57,202,0.08) 1px, transparent 1px)",
+        backgroundSize: "18px 18px",
+      }}
+    >
+      <header className="flex flex-wrap items-center gap-3 border-b border-line px-4 py-4 sm:px-8">
+        <Link href="/login" className="flex shrink-0 items-center gap-2.5">
+          <Image src="/elementpay-logo.png" alt="ElementPay" width={22} height={22} className="rounded-[5px]" />
+          <span className="text-[15px] font-bold tracking-tight text-ink">ElementPay</span>
+          <span className="rounded-md bg-primary-tint px-1.5 py-0.5 text-[11px] font-bold text-primary">
+            Merchant
+          </span>
+        </Link>
+        <div className="ml-auto flex shrink-0 flex-wrap items-center justify-end gap-2 sm:gap-3">
+          <EnvBadge dark={false} />
+          <EnvSwitchLink />
         </div>
       </header>
 
-      <div className="flex flex-1 flex-col items-center justify-center bg-white px-6 py-12 animate-fade-in">
-        <div className="w-[420px] max-w-full rounded-[20px] border border-line bg-white px-9 py-10 shadow-[0_24px_60px_rgba(0,0,0,0.08)]">
-          {children}
+      <div className="mx-auto flex w-full max-w-[1240px] flex-1 items-stretch gap-7 px-6 py-8 animate-fade-in">
+        <div className="flex flex-1 flex-col items-center justify-center">
+          <div className="w-[480px] max-w-full rounded-xl border border-line bg-white px-[22px] py-[22px] shadow-[0_8px_30px_rgba(20,24,28,0.08)]">
+            {children}
+          </div>
+          <p className="mt-5 flex max-w-[480px] items-center justify-center gap-1.5 text-center text-xs text-faint">
+            <ShieldCheckIcon />
+            By continuing you agree to ElementPay&apos;s Terms of Service and Privacy Policy.
+          </p>
         </div>
-        <p className="mt-6 flex max-w-[420px] items-center justify-center gap-1.5 text-center text-xs text-faint">
-          <ShieldCheckIcon />
-          By continuing you agree to ElementPay&apos;s Terms of Service and Privacy Policy.
-        </p>
+        <div className="hidden flex-1 lg:block">
+          <CheckoutSimPanel />
+        </div>
       </div>
     </div>
   );

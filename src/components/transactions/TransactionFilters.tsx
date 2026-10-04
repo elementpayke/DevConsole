@@ -102,10 +102,12 @@ export function TransactionFilters({
   tokens: string[];
   fiatFirst?: boolean;
 }) {
-  const selectClass =
-    "rounded-lg border border-line-strong bg-white px-3.5 py-2.5 font-sans text-[13px]";
-  const dateClass =
-    "rounded-lg border border-line-strong bg-white px-3 py-2.5 font-sans text-[13px] text-ink";
+  const fieldStyle: React.CSSProperties = {
+    border: "1px solid var(--border-strong)",
+    background: "var(--panel-solid)",
+  };
+  const selectClass = "rounded-lg px-3.5 py-2.5 font-sans text-[13px]";
+  const dateClass = "rounded-lg px-3 py-2.5 font-sans text-[13px] text-ink";
 
   return (
     <div className="flex flex-wrap items-center gap-2.5">
@@ -113,12 +115,14 @@ export function TransactionFilters({
         value={filters.search}
         onChange={(e) => onChange({ ...filters, search: e.target.value })}
         placeholder="Search order ID or phone"
-        className="w-[230px] rounded-lg border border-line-strong px-3.5 py-2.5 font-sans text-[13px]"
+        className="w-[230px] rounded-lg px-3.5 py-2.5 font-sans text-[13px]"
+        style={fieldStyle}
       />
       <select
         value={filters.status}
         onChange={(e) => onChange({ ...filters, status: e.target.value })}
         className={selectClass}
+        style={fieldStyle}
       >
         <option value="all">All statuses</option>
         <option value="settled">Settled</option>
@@ -131,6 +135,7 @@ export function TransactionFilters({
         value={filters.orderType}
         onChange={(e) => onChange({ ...filters, orderType: e.target.value as Filters["orderType"] })}
         className={selectClass}
+        style={fieldStyle}
       >
         <option value="all">On/off-ramp</option>
         <option value="offramp">Off-ramp</option>
@@ -141,6 +146,7 @@ export function TransactionFilters({
           value={filters.token}
           onChange={(e) => onChange({ ...filters, token: e.target.value })}
           className={selectClass}
+          style={fieldStyle}
         >
           <option value="all">All tokens</option>
           {tokens.map((t) => (
@@ -159,6 +165,7 @@ export function TransactionFilters({
           })
         }
         className={selectClass}
+        style={fieldStyle}
         aria-label="Date period"
       >
         <option value="all">All time</option>
@@ -176,6 +183,7 @@ export function TransactionFilters({
               value={filters.dateFrom}
               onChange={(e) => onChange({ ...filters, dateFrom: e.target.value })}
               className={dateClass}
+              style={fieldStyle}
             />
           </label>
           <label className="flex items-center gap-1.5 text-[12px] text-muted">
@@ -186,6 +194,7 @@ export function TransactionFilters({
               min={filters.dateFrom || undefined}
               onChange={(e) => onChange({ ...filters, dateTo: e.target.value })}
               className={dateClass}
+              style={fieldStyle}
             />
           </label>
         </>

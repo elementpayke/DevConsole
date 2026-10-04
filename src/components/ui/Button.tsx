@@ -4,8 +4,8 @@ type Variant = "primary" | "secondary" | "danger";
 
 const VARIANT_CLASS: Record<Variant, string> = {
   primary: "bg-primary text-white hover:bg-primary-hover border border-transparent",
-  secondary: "bg-white text-ink border border-line-strong hover:bg-surface",
-  danger: "bg-white text-[oklch(0.55_0.19_25)] border border-line-strong hover:bg-surface",
+  secondary: "bg-panel text-ink border border-line-strong hover:bg-surface",
+  danger: "bg-panel text-[oklch(0.55_0.19_25)] border border-line-strong hover:bg-surface",
 };
 
 export function Button({

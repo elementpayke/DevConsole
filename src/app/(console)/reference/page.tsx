@@ -41,14 +41,14 @@ export default function ReferencePage() {
     <>
       <Header title="Reference" />
       <div className="p-7">
-        <div className="mb-[22px] flex w-fit gap-1.5 rounded-lg bg-[oklch(0.95_0.004_264)] p-1">
+        <div className="mb-[22px] flex w-fit gap-1.5 rounded-lg p-1" style={{ background: "var(--surface)" }}>
           {(["tokens", "explorer"] as const).map((t) => (
             <span
               key={t}
               onClick={() => setTab(t)}
               className="cursor-pointer rounded-md px-4 py-2 text-[13px] font-bold"
               style={{
-                background: tab === t ? "#fff" : "transparent",
+                background: tab === t ? "var(--panel)" : "transparent",
                 color: tab === t ? "var(--ink)" : "var(--subtle)",
               }}
             >
@@ -72,7 +72,10 @@ export default function ReferencePage() {
             </p>
 
             {error && (
-              <p className="mb-4 rounded-lg border border-line-strong bg-white p-3 text-[13px] text-[oklch(0.55_0.19_25)]">
+              <p
+                className="mb-4 rounded-lg border border-line-strong p-3 text-[13px]"
+                style={{ background: "var(--panel)", color: "var(--bad-text)" }}
+              >
                 {error}
               </p>
             )}

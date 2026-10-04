@@ -72,7 +72,7 @@ export function CreateKeyModal({
           <p className="mt-1.5 text-[11px] text-faint">8–128 characters. Only needed if a webhook URL is set.</p>
         </div>
 
-        {error && <p className="text-[12.5px] font-medium text-[oklch(0.55_0.19_25)]">{error}</p>}
+        {error && <p className="text-[12.5px] font-medium" style={{ color: "var(--bad-text)" }}>{error}</p>}
 
         <div className="mt-1 flex gap-2.5">
           <Button type="button" variant="secondary" onClick={onClose} className="flex-1">

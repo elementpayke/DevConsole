@@ -4,7 +4,6 @@ import { useCallback, useEffect, useState } from "react";
 import { usePrivy, useWallets } from "@privy-io/react-auth";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/Button";
-import { GlassCard } from "@/components/ui/GlassCard";
 import { connectLinkedWallet, listLinkedWallets } from "@/lib/api/wallets";
 import { ApiError } from "@/lib/api/client";
 import {
@@ -139,25 +138,25 @@ export function MerchantWalletSetupPanel() {
 
   if (linked) {
     return (
-      <GlassCard className="p-5">
-        <p className="text-sm text-muted">Your ElementPay payment account</p>
-        <p className="mono mt-2 break-all text-xs">{linked.address}</p>
+      <section className="rounded-xl p-5" style={{ background: "var(--panel)", border: "1px solid var(--border)" }}>
+        <p className="text-sm" style={{ color: "var(--muted)" }}>Your ElementPay payment account</p>
+        <p className="mono mt-2 text-xs break-all">{linked.address}</p>
         <Button className="mt-4" onClick={() => router.push("/dashboard")}>
           Back to dashboard
         </Button>
-      </GlassCard>
+      </section>
     );
   }
 
   return (
-    <GlassCard className="p-5">
+    <section className="rounded-xl p-5" style={{ background: "var(--panel)", border: "1px solid var(--border)" }}>
       <h2 className="text-lg font-bold">Set up your payment account</h2>
-      <p className="mt-2 text-[13px] text-muted">
+      <p className="mt-2 text-[13px]" style={{ color: "var(--muted)" }}>
         ElementPay uses this account for your collections and Off-ramp withdrawals. If you
         already use ElementPay with the same email, we reuse your existing account.
       </p>
       {error && (
-        <p className="mt-3 text-[12.5px] font-medium text-[oklch(0.55_0.19_25)]">{error}</p>
+        <p className="mt-3 text-[12.5px] font-medium" style={{ color: "var(--bad-text)" }}>{error}</p>
       )}
       <Button
         className="mt-4"
@@ -166,6 +165,6 @@ export function MerchantWalletSetupPanel() {
       >
         {busy ? "Setting up…" : "Activate account"}
       </Button>
-    </GlassCard>
+    </section>
   );
 }

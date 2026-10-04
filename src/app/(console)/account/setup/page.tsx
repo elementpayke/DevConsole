@@ -27,7 +27,7 @@ export default function MerchantAccountSetupPage() {
     <>
       <Header title="Account setup" />
       <MerchantPrivyShell>
-        <div className="mx-auto max-w-lg p-6">
+        <div className="mx-auto max-w-lg p-5 md:p-7">
           <MerchantWalletSetupPanel />
         </div>
       </MerchantPrivyShell>

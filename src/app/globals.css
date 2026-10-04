@@ -1,6 +1,7 @@
 @import "tailwindcss";
 
 :root {
+  color-scheme: light;
   --ink: oklch(0.19 0.02 264);
   --muted: oklch(0.48 0.015 264);
   --subtle: oklch(0.5 0.012 264);
@@ -9,9 +10,74 @@
   --line-soft: oklch(0.95 0.004 264);
   --line-strong: oklch(0.88 0.006 264);
   --surface: oklch(0.96 0.006 264);
+  --surface-soft: oklch(0.975 0.002 264);
+  --panel: #ffffff;
+  --panel-solid: #ffffff;
+  --border: oklch(0.91 0.006 264);
+  --border-strong: oklch(0.86 0.006 264);
   --primary: #4339ca;
   --primary-hover: #362ea3;
   --primary-tint: #f0effc;
+  --indigo: #4339ca;
+  --indigo-text: #3a30b8;
+  --indigo-tint: #f0effc;
+  --indigo-soft: #b7b2ef;
+  --on-indigo: #ffffff;
+  --ok-bg: oklch(0.945 0.018 160);
+  --ok-text: oklch(0.42 0.06 160);
+  --warn-bg: oklch(0.955 0.022 80);
+  --warn-text: oklch(0.47 0.06 75);
+  --bad-bg: oklch(0.955 0.018 25);
+  --bad-text: oklch(0.48 0.08 25);
+  --code-bg: oklch(0.965 0.003 264);
+  --code-text: oklch(0.3 0.018 264);
+  --code-line: oklch(0.91 0.004 264);
+  --rail: #ffffff;
+  --rail-line: oklch(0.91 0.004 264);
+  --rail-text: oklch(0.19 0.012 264);
+  --rail-muted: oklch(0.45 0.009 264);
+  --rail-dim: oklch(0.56 0.007 264);
+  --env-band: repeating-linear-gradient(135deg, rgba(67, 57, 202, 0.14) 0 10px, rgba(67, 57, 202, 0.04) 10px 20px);
+}
+
+[data-theme="dark"] {
+  color-scheme: dark;
+  --ink: oklch(0.96 0.003 264);
+  --muted: oklch(0.74 0.007 264);
+  --subtle: oklch(0.68 0.007 264);
+  --faint: oklch(0.62 0.007 264);
+  --line: oklch(0.26 0.008 264);
+  --line-soft: oklch(0.24 0.008 264);
+  --line-strong: oklch(0.34 0.010 264);
+  --surface: oklch(0.24 0.010 264);
+  --surface-soft: oklch(0.19 0.009 264);
+  --panel: oklch(0.205 0.010 264);
+  --panel-solid: oklch(0.205 0.010 264);
+  --border: oklch(0.29 0.009 264);
+  --border-strong: oklch(0.34 0.010 264);
+  --primary: #7068f0;
+  --primary-hover: #8d86f4;
+  --primary-tint: rgba(112, 104, 240, 0.16);
+  --indigo: #7068f0;
+  --indigo-text: #a9a3f7;
+  --indigo-tint: rgba(112, 104, 240, 0.16);
+  --indigo-soft: #3c368f;
+  --on-indigo: #ffffff;
+  --ok-bg: oklch(0.3 0.025 160);
+  --ok-text: oklch(0.82 0.05 160);
+  --warn-bg: oklch(0.32 0.025 80);
+  --warn-text: oklch(0.84 0.05 80);
+  --bad-bg: oklch(0.32 0.03 25);
+  --bad-text: oklch(0.82 0.05 25);
+  --code-bg: oklch(0.185 0.009 264);
+  --code-text: oklch(0.88 0.018 264);
+  --code-line: oklch(0.29 0.009 264);
+  --rail: oklch(0.185 0.009 264);
+  --rail-line: oklch(0.29 0.009 264);
+  --rail-text: oklch(0.96 0.003 264);
+  --rail-muted: oklch(0.74 0.007 264);
+  --rail-dim: oklch(0.62 0.007 264);
+  --env-band: repeating-linear-gradient(135deg, rgba(112, 104, 240, 0.28) 0 10px, rgba(112, 104, 240, 0.08) 10px 20px);
 }
 
 @theme inline {
@@ -23,9 +89,17 @@
   --color-line-soft: var(--line-soft);
   --color-line-strong: var(--line-strong);
   --color-surface: var(--surface);
+  --color-surface-soft: var(--surface-soft);
+  --color-panel: var(--panel);
+  --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
   --color-primary: var(--primary);
   --color-primary-hover: var(--primary-hover);
   --color-primary-tint: var(--primary-tint);
+  --color-indigo: var(--indigo);
+  --color-indigo-text: var(--indigo-text);
+  --color-indigo-tint: var(--indigo-tint);
+  --color-on-indigo: var(--on-indigo);
   --font-sans: var(--font-manrope);
   --font-mono: var(--font-jetbrains-mono);
 }
@@ -45,6 +119,16 @@
   animation: fadeIn 0.3s ease;
 }
 
+@keyframes epSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-spin-slow {
+  animation: epSpin 0.9s linear infinite;
+}
+
 body {
   margin: 0;
   font-family: var(--font-manrope), sans-serif;
@@ -56,6 +140,14 @@ body {
   background-attachment: fixed;
   min-height: 100vh;
   color: var(--ink);
+}
+
+[data-theme="dark"] body {
+  background:
+    radial-gradient(circle at 8% 8%, oklch(0.3 0.05 276 / 0.35) 0%, transparent 38%),
+    radial-gradient(circle at 92% 15%, oklch(0.28 0.07 200 / 0.3) 0%, transparent 42%),
+    radial-gradient(circle at 30% 90%, oklch(0.3 0.06 340 / 0.25) 0%, transparent 45%),
+    var(--surface);
 }
 
 a {
@@ -89,6 +181,21 @@ a:hover {
   backdrop-filter: blur(24px) saturate(160%);
   -webkit-backdrop-filter: blur(24px) saturate(160%);
   border: 1px solid oklch(1 0 0 / 0.6);
+}
+
+[data-theme="dark"] .glass-card {
+  background: oklch(0.22 0.01 264 / 0.6);
+  border-color: oklch(1 0 0 / 0.08);
+  box-shadow: 0 4px 20px oklch(0 0 0 / 0.25);
+}
+
+[data-theme="dark"] .glass-panel {
+  background: oklch(0.2 0.01 264 / 0.65);
+}
+
+[data-theme="dark"] .solid-card {
+  background: oklch(0.22 0.01 264 / 0.96);
+  border-color: oklch(1 0 0 / 0.08);
 }
 
 .mono {

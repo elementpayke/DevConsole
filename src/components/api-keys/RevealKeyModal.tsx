@@ -50,7 +50,7 @@ export function RevealKeyModal({ apiKey, onClose }: { apiKey: ApiKeyCreated; onC
         </div>
       </div>
 
-      <div className="mb-4 flex items-center gap-2.5 rounded-lg border border-line-strong bg-[oklch(0.98_0.003_264)] px-4 py-3.5">
+      <div className="mb-4 flex items-center gap-2.5 rounded-lg border border-line-strong bg-surface-soft px-4 py-3.5">
         <code className="mono flex-1 text-[13px] break-all">
           {visible ? apiKey.key : mask(apiKey.key)}
         </code>
