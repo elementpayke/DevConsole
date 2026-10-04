@@ -102,8 +102,10 @@ describe("buildCollectMethodRows", () => {
     assert.equal(byId.card?.status, "coming_soon");
     assert.equal(byId.card?.customerVisible, false);
     assert.equal(byId.bank?.status, "catalog_only");
-    assert.equal(byId.stable?.status, "preference_only");
-    assert.equal(byId.stable?.customerVisible, false);
+    assert.equal(byId.stable?.status, "live");
+    assert.equal(byId.stable?.customerVisible, true);
+    assert.match(byId.stable?.label ?? "", /USDC/);
+    assert.doesNotMatch(byId.stable?.label ?? "", /USDT/);
   });
 
   it("marks M-Pesa off when merchant disabled it", () => {

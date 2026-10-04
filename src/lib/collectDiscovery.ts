@@ -112,7 +112,8 @@ export function listCollectMethodsForCountry(
 
 /**
  * Console Methods tab rows: catalog availability + merchant prefs + customer visibility.
- * Cards never customer-visible until live; stable is preference-only for now.
+ * Cards never customer-visible until live. USDC (not USDT) is live when enabled —
+ * customers pay on EVM source chains; merchant home is Stellar.
  */
 export function buildCollectMethodRows(
   catalogMethods: CollectCatalogMethod[],
@@ -160,11 +161,13 @@ export function buildCollectMethodRows(
 
   rows.push({
     id: "stable",
-    label: "USDC / USDT",
-    note: "Preference stored for when stable checkout ships; not shown to customers yet.",
-    status: "preference_only",
+    label: "USDC (multi-chain → Stellar)",
+    note: prefs.allow_stable
+      ? "Customers pay USDC on Base, Arbitrum, etc.; you receive USDC on Stellar. Bridge fees are paid by the customer. USDT is not on payment links yet."
+      : "Enable to let customers pay USDC on allowlisted EVM chains into your Stellar home (customer pays bridge fees).",
+    status: prefs.allow_stable ? "live" : "preference_only",
     merchantEnabled: prefs.allow_stable,
-    customerVisible: false,
+    customerVisible: prefs.allow_stable,
   });
 
   return rows;

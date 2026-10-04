@@ -16,6 +16,17 @@ export type CollectProfile = {
   kyc_subject_user_id?: number | null;
   kyc_subject_role?: string | null;
   kyc_verified?: boolean;
+  /** Stellar USDC home + customer-paid bridge contract. */
+  settlement?: {
+    home_asset?: string;
+    home_network?: string;
+    bridge_fee_payer?: string;
+    merchant_receives?: string;
+    home_ready?: boolean;
+    notes?: string;
+  } | null;
+  accepts?: string[];
+  source_chains?: Array<{ chain: string; label?: string; asset?: string }>;
 };
 
 export type PaymentLink = {
