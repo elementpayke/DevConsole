@@ -12,19 +12,37 @@ import { ApiError } from "@/lib/api/client";
 import { statusStyle } from "@/lib/theme";
 import type { DashboardStats, Order } from "@/lib/types";
 
-function dayKey(iso: string) {
-  return iso.slice(0, 10);
+/** Local-calendar day key (not UTC) so "today" matches the merchant's own clock. */
+function dayKey(date: Date) {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, "0");
+  const d = String(date.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
 }
 
 function last14Days() {
   const days: string[] = [];
   const now = new Date();
   for (let i = 13; i >= 0; i--) {
-    const d = new Date(now);
-    d.setDate(now.getDate() - i);
-    days.push(d.toISOString().slice(0, 10));
+    const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() - i);
+    days.push(dayKey(d));
   }
   return days;
+}
+
+/** Most frequent currency among recent orders — the chart only sums same-currency amounts. */
+function primaryCurrency(orders: Order[]): string | null {
+  const counts = new Map<string, number>();
+  for (const o of orders) counts.set(o.currency, (counts.get(o.currency) ?? 0) + 1);
+  let best: string | null = null;
+  let bestCount = 0;
+  for (const [currency, count] of counts) {
+    if (count > bestCount) {
+      best = currency;
+      bestCount = count;
+    }
+  }
+  return best;
 }
 
 export default function DashboardPage() {
@@ -32,13 +50,25 @@ export default function DashboardPage() {
   const { isMerchant } = useMerchantExperience();
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [orders, setOrders] = useState<Order[] | null>(null);
+  const [ordersFailed, setOrdersFailed] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!isAuthenticated) return;
     let cancelled = false;
-    Promise.all([getDashboardStats(), listMyOrders().catch(() => [])])
+    Promise.all([
+      getDashboardStats(),
+      listMyOrders()
+        .then((list) => {
+          if (!cancelled) setOrdersFailed(false);
+          return list;
+        })
+        .catch(() => {
+          if (!cancelled) setOrdersFailed(true);
+          return [] as Order[];
+        }),
+    ])
       .then(([dashboard, orderList]) => {
         if (cancelled) return;
         setStats(dashboard);
@@ -60,15 +90,17 @@ export default function DashboardPage() {
 
   const chart = useMemo(() => {
     const days = last14Days();
+    const currency = primaryCurrency(orders ?? []);
     const totals = new Map<string, number>();
     for (const day of days) totals.set(day, 0);
     for (const o of orders ?? []) {
-      const key = dayKey(o.created_at);
+      if (currency && o.currency !== currency) continue;
+      const key = dayKey(new Date(o.created_at));
       if (totals.has(key)) totals.set(key, (totals.get(key) ?? 0) + o.amount_fiat);
     }
     const values = days.map((d) => totals.get(d) ?? 0);
     const max = Math.max(1, ...values);
-    return { days, values, max };
+    return { days, values, max, currency };
   }, [orders]);
 
   const recent = (orders ?? []).slice(0, 6);
@@ -88,7 +120,7 @@ export default function DashboardPage() {
         ) : stats && isFresh ? (
           <FreshOverview firstName={firstName} kycVerified={Boolean(user?.kyc_verified)} />
         ) : stats ? (
-          <FullOverview stats={stats} chart={chart} recent={recent} isMerchant={isMerchant} />
+          <FullOverview stats={stats} chart={chart} recent={recent} ordersFailed={ordersFailed} isMerchant={isMerchant} />
         ) : null}
       </div>
     </>
@@ -175,11 +207,13 @@ function FullOverview({
   stats,
   chart,
   recent,
+  ordersFailed,
   isMerchant,
 }: {
   stats: DashboardStats;
-  chart: { days: string[]; values: number[]; max: number };
+  chart: { days: string[]; values: number[]; max: number; currency: string | null };
   recent: Order[];
+  ordersFailed: boolean;
   isMerchant: boolean;
 }) {
   const kpis = [
@@ -219,9 +253,14 @@ function FullOverview({
               Today
             </span>
             <span className="mono text-[36px] leading-none font-bold">
+              {chart.currency ? `${chart.currency} ` : ""}
               {todayTotal.toLocaleString(undefined, { maximumFractionDigits: 0 })}
             </span>
-            <span className="text-[12.5px]" style={{ color: "var(--muted)" }}>Fiat volume, last 14 days below</span>
+            <span className="text-[12.5px]" style={{ color: "var(--muted)" }}>
+              {chart.currency
+                ? `${chart.currency} volume, last 14 days below`
+                : "Fiat volume, last 14 days below"}
+            </span>
           </div>
         </div>
         <div className="flex items-end gap-1.5 px-[22px]" style={{ height: 120 }}>
@@ -253,7 +292,11 @@ function FullOverview({
             View all →
           </Link>
         </div>
-        {recent.length === 0 ? (
+        {ordersFailed ? (
+          <div className="px-4 py-8 text-center text-[13px]" style={{ color: "var(--bad-text)", borderTop: "1px solid var(--line)" }}>
+            Couldn&apos;t load recent activity. Refresh to try again.
+          </div>
+        ) : recent.length === 0 ? (
           <div className="px-4 py-8 text-center text-[13px]" style={{ color: "var(--muted)", borderTop: "1px solid var(--line)" }}>
             No transactions yet.
           </div>

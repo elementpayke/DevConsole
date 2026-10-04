@@ -187,7 +187,8 @@ function VerifyEmailForm() {
                 onKeyDown={(e) => handleKeyDown(idx, e)}
                 onFocus={(e) => e.target.select()}
                 aria-label={`Digit ${idx + 1} of ${CODE_LENGTH}`}
-                className="box-border h-12 w-11 rounded-lg border border-line-strong bg-white text-center font-sans text-lg font-bold tabular-nums outline-none focus:border-primary focus:ring-2 focus:ring-primary/15 sm:w-12"
+                className="box-border h-12 w-11 rounded-lg border border-line-strong text-center font-sans text-lg font-bold tabular-nums outline-none focus:border-primary focus:ring-2 focus:ring-primary/15 sm:w-12"
+                style={{ background: "var(--panel-solid)", color: "var(--ink)" }}
               />
             ))}
           </div>

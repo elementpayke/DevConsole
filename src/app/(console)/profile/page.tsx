@@ -150,17 +150,17 @@ export default function ProfilePage() {
               </div>
               <form onSubmit={handleUpdatePassword} className="flex flex-col gap-3.5">
                 <div>
-                  <div className="mb-1.5 text-xs font-bold">Current password</div>
-                  <PasswordInput required value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} placeholder="••••••••" />
+                  <label htmlFor="current-password" className="mb-1.5 block text-xs font-bold">Current password</label>
+                  <PasswordInput id="current-password" required value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} placeholder="••••••••" />
                 </div>
                 <div className="grid grid-cols-2 gap-3.5">
                   <div>
-                    <div className="mb-1.5 text-xs font-bold">New password</div>
-                    <PasswordInput required minLength={8} value={newPassword} onChange={(e) => setNewPassword(e.target.value)} placeholder="At least 8 characters" />
+                    <label htmlFor="new-password" className="mb-1.5 block text-xs font-bold">New password</label>
+                    <PasswordInput id="new-password" required minLength={8} value={newPassword} onChange={(e) => setNewPassword(e.target.value)} placeholder="At least 8 characters" />
                   </div>
                   <div>
-                    <div className="mb-1.5 text-xs font-bold">Confirm new password</div>
-                    <PasswordInput required value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} placeholder="Repeat password" />
+                    <label htmlFor="confirm-password" className="mb-1.5 block text-xs font-bold">Confirm new password</label>
+                    <PasswordInput id="confirm-password" required value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} placeholder="Repeat password" />
                   </div>
                 </div>
                 {error && <p className="text-[12.5px] font-medium" style={{ color: "var(--bad-text)" }}>{error}</p>}

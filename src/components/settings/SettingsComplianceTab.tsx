@@ -54,8 +54,10 @@ export function SettingsComplianceTab({ kycVerified }: { kycVerified: boolean })
         </span>
         <span className="flex flex-col gap-0.5">
           <span className="text-[11px] font-bold tracking-wide uppercase" style={{ color: "var(--muted)" }}>Live limit</span>
-          <span className="mono text-[16px] font-medium">{kycVerified ? "KES 2,000,000 / mo" : "Locked"}</span>
-          <span className="text-[11.5px]" style={{ color: "var(--faint)" }}>Raises as your history grows</span>
+          <span className="mono text-[16px] font-medium">{kycVerified ? "Set by ElementPay" : "Locked"}</span>
+          <span className="text-[11.5px]" style={{ color: "var(--faint)" }}>
+            {kycVerified ? "Your account limit is not shown here yet" : "Unlocks after verification"}
+          </span>
         </span>
       </div>
     </div>

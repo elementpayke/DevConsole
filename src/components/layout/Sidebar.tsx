@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
@@ -105,9 +105,15 @@ export function Sidebar() {
   const { isMerchant } = useMerchantExperience();
   const { railOpen, toggleRail, mobileOpen, closeMobile } = useRail();
   const [checkoutOpen, setCheckoutOpen] = useState(true);
-  const [devToolsRevealed, setDevToolsRevealed] = useState(
-    () => typeof window !== "undefined" && window.sessionStorage.getItem(DEV_TOOLS_KEY) === "true",
-  );
+  // Starts false (matches SSR) and syncs from sessionStorage after mount to avoid
+  // a hydration mismatch on the API Keys/Reference links this flag gates.
+  const [devToolsRevealed, setDevToolsRevealed] = useState(false);
+
+  useEffect(() => {
+    // Sync session flag after hydration; SSR snapshot hides merchant-only links.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (window.sessionStorage.getItem(DEV_TOOLS_KEY) === "true") setDevToolsRevealed(true);
+  }, []);
 
   const initial = (user?.email?.[0] ?? "?").toUpperCase();
   const showDevTools = !isMerchant || devToolsRevealed;
@@ -189,44 +195,44 @@ export function Sidebar() {
           );
         })}
 
-        <Link
-          href="/checkout"
-          onClick={closeMobile}
-          className={navLinkClass(onCheckout)}
-          style={navLinkStyle(onCheckout)}
-          title={railOpen ? undefined : "Checkout"}
-        >
-          <NavIcon d={ICONS.checkout} />
+        <div className="flex items-center rounded-lg" style={navLinkStyle(onCheckout)}>
+          <Link
+            href="/checkout"
+            onClick={closeMobile}
+            className={`flex min-w-0 flex-1 items-center gap-3 px-3 py-2.5 text-[13.5px] ${
+              onCheckout ? "font-bold" : "font-semibold"
+            }`}
+            style={{ color: "inherit" }}
+            title={railOpen ? undefined : "Checkout"}
+          >
+            <NavIcon d={ICONS.checkout} />
+            {railOpen && <span className="truncate">Checkout</span>}
+          </Link>
           {railOpen && (
-            <>
-              <span className="truncate">Checkout</span>
-              <span
-                role="button"
-                aria-label="Show or hide checkout pages"
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  setCheckoutOpen((v) => !v);
-                }}
-                className="ml-auto flex h-5 w-5 flex-shrink-0 items-center justify-center rounded"
+            <button
+              type="button"
+              aria-label="Show or hide checkout pages"
+              aria-expanded={checkoutOpen}
+              onClick={() => setCheckoutOpen((v) => !v)}
+              className="mr-2 flex h-5 w-5 flex-shrink-0 items-center justify-center rounded"
+              style={{ color: "inherit" }}
+            >
+              <svg
+                width="12"
+                height="12"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth={2.2}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                style={{ transform: checkoutOpen ? "rotate(180deg)" : "none", transition: "transform .15s" }}
               >
-                <svg
-                  width="12"
-                  height="12"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth={2.2}
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  style={{ transform: checkoutOpen ? "rotate(180deg)" : "none", transition: "transform .15s" }}
-                >
-                  <path d="m6 9 6 6 6-6" />
-                </svg>
-              </span>
-            </>
+                <path d="m6 9 6 6 6-6" />
+              </svg>
+            </button>
           )}
-        </Link>
+        </div>
         {railOpen && checkoutOpen && (
           <div className="flex flex-col gap-0.5 pl-[13px]">
             {CHECKOUT_SUBLINKS.map((sub) => {

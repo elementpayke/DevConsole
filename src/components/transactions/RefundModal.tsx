@@ -1,49 +1,39 @@
 "use client";
 
-import { useState } from "react";
 import { Modal } from "@/components/ui/Modal";
 import { Button } from "@/components/ui/Button";
 import type { Order } from "@/lib/types";
 
-/** No refund endpoint exists on the aggregator yet — this records intent only. */
+/** No refund endpoint exists on the aggregator yet — point merchants at support. */
 export function RefundModal({ order, onClose }: { order: Order; onClose: () => void }) {
-  const [reason, setReason] = useState("");
-  const [submitted, setSubmitted] = useState(false);
+  const shortId = order.order_id.slice(0, 14);
+  const mailto = `mailto:support@elementpay.net?subject=${encodeURIComponent(
+    `Refund request for ${order.order_id}`,
+  )}&body=${encodeURIComponent(
+    `Please refund order ${order.order_id} (${order.currency} ${order.amount_fiat}).\n\nReason:\n`,
+  )}`;
 
   return (
-    <Modal onClose={onClose} width={440}>
+    <Modal onClose={onClose} width={440} zIndexClass="z-[1100]">
       <div className="mb-1 text-[17px] font-bold">Refund order</div>
       <p className="mb-4 text-[12.5px]" style={{ color: "var(--muted)" }}>
-        <span className="mono">{order.order_id.slice(0, 14)}</span> · {order.currency} {order.amount_fiat.toLocaleString()}
+        <span className="mono">{shortId}</span> · {order.currency} {order.amount_fiat.toLocaleString()}
       </p>
-      {submitted ? (
-        <div className="rounded-lg p-3 text-[13px]" style={{ background: "var(--ok-bg)", color: "var(--ok-text)" }}>
-          Refund request recorded. Our team will process it and update this order&apos;s status.
-        </div>
-      ) : (
-        <>
-          <div
-            className="mb-3 rounded-lg p-3 text-[12px]"
-            style={{ background: "var(--warn-bg)", color: "var(--warn-text)" }}
-          >
-            Self-serve refunds aren&apos;t live yet — this opens a request to ElementPay support.
-          </div>
-          <label className="mb-4 flex flex-col gap-1.5 text-[11.5px] font-semibold" style={{ color: "var(--muted)" }}>
-            Reason (optional)
-            <textarea
-              value={reason}
-              onChange={(e) => setReason(e.target.value)}
-              rows={3}
-              placeholder="Why is this being refunded?"
-              className="rounded-lg p-2.5 text-[13px]"
-              style={{ border: "1px solid var(--border-strong)", background: "var(--panel-solid)", resize: "vertical" }}
-            />
-          </label>
-          <Button type="button" className="w-full" onClick={() => setSubmitted(true)}>
-            Request refund
-          </Button>
-        </>
-      )}
+      <div
+        className="mb-4 rounded-lg p-3 text-[12.5px] leading-relaxed"
+        style={{ background: "var(--warn-bg)", color: "var(--warn-text)" }}
+      >
+        Self-serve refunds aren&apos;t available yet. Email ElementPay support with this order ID —
+        nothing is submitted from this screen.
+      </div>
+      <div className="flex flex-col gap-2 sm:flex-row">
+        <Button type="button" className="w-full" onClick={() => window.open(mailto, "_self")}>
+          Email support
+        </Button>
+        <Button type="button" variant="secondary" className="w-full" onClick={onClose}>
+          Close
+        </Button>
+      </div>
     </Modal>
   );
 }

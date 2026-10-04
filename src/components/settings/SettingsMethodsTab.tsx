@@ -13,7 +13,15 @@ export function SettingsMethodsTab() {
 
   return (
     <div className="flex max-w-[620px] flex-col gap-3">
-      <p className="text-[12.5px]" style={{ color: "var(--muted)" }}>Off means hidden everywhere customers see checkout.</p>
+      <div
+        className="rounded-lg px-3 py-2.5 text-[12.5px] leading-relaxed"
+        style={{ background: "var(--warn-bg)", color: "var(--warn-text)" }}
+      >
+        Preview only — toggles here are not saved and do not change live checkout.
+      </div>
+      <p className="text-[12.5px]" style={{ color: "var(--muted)" }}>
+        Planned controls for which rails customers see at checkout.
+      </p>
       {DEFAULT_METHODS.map((m) => (
         <div
           key={m.id}
@@ -27,6 +35,7 @@ export function SettingsMethodsTab() {
           <button
             type="button"
             role="switch"
+            aria-label={`${m.label}: ${enabled[m.id] ? "enabled" : "disabled"} (preview)`}
             aria-checked={enabled[m.id]}
             onClick={() => setEnabled((prev) => ({ ...prev, [m.id]: !prev[m.id] }))}
             className="relative h-6 w-10 flex-shrink-0 rounded-full transition-colors"

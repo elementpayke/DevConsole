@@ -1,19 +1,29 @@
 "use client";
 
-import { createContext, useCallback, useContext, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useState } from "react";
 
 const STORAGE_KEY = "ep-rail-open";
 
-function readInitialRailOpen(): boolean {
-  if (typeof window === "undefined") return true;
-  return window.localStorage.getItem(STORAGE_KEY) !== "false";
+function readStoredRailOpen(): boolean | null {
+  try {
+    const stored = window.localStorage.getItem(STORAGE_KEY);
+    return stored === null ? null : stored !== "false";
+  } catch {
+    return null;
+  }
+}
+
+function writeStoredRailOpen(open: boolean) {
+  try {
+    window.localStorage.setItem(STORAGE_KEY, String(open));
+  } catch {
+    // Collapse/expand still works for this session even if persistence fails.
+  }
 }
 
 type RailContextValue = {
-  /** Desktop: rail expanded (labels visible) vs collapsed (icons only). */
   railOpen: boolean;
   toggleRail: () => void;
-  /** Mobile: off-canvas drawer open. */
   mobileOpen: boolean;
   openMobile: () => void;
   closeMobile: () => void;
@@ -22,17 +32,26 @@ type RailContextValue = {
 const RailContext = createContext<RailContextValue | null>(null);
 
 export function RailProvider({ children }: { children: React.ReactNode }) {
-  const [railOpen, setRailOpen] = useState(readInitialRailOpen);
+  // Starts expanded (matches SSR) and syncs the saved preference after mount,
+  // rather than reading localStorage during the initial render, to avoid a
+  // hydration mismatch against the server-rendered markup.
+  const [railOpen, setRailOpen] = useState(true);
   const [mobileOpen, setMobileOpen] = useState(false);
+
+  useEffect(() => {
+    const stored = readStoredRailOpen();
+    // Sync saved rail preference after hydration; SSR snapshot stays expanded.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (stored !== null) setRailOpen(stored);
+  }, []);
 
   const toggleRail = useCallback(() => {
     setRailOpen((prev) => {
       const next = !prev;
-      window.localStorage.setItem(STORAGE_KEY, String(next));
+      writeStoredRailOpen(next);
       return next;
     });
   }, []);
-
   const openMobile = useCallback(() => setMobileOpen(true), []);
   const closeMobile = useCallback(() => setMobileOpen(false), []);
 

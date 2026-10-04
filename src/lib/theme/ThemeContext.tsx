@@ -17,24 +17,40 @@ function applyMode(mode: ColorMode) {
   document.documentElement.dataset.theme = mode;
 }
 
-function readInitialMode(): ColorMode {
-  if (typeof window === "undefined") return "light";
-  return window.localStorage.getItem(STORAGE_KEY) === "dark" ? "dark" : "light";
+function readStoredMode(): ColorMode | null {
+  try {
+    return window.localStorage.getItem(STORAGE_KEY) === "dark" ? "dark" : null;
+  } catch {
+    // Storage can be unavailable (private browsing, denied permission, etc).
+    return null;
+  }
 }
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [mode, setMode] = useState<ColorMode>(readInitialMode);
+  // Always starts "light" so the first client render matches the server-rendered
+  // markup (descendants read `mode` for visible text, e.g. the theme toggle label) —
+  // the inline script in layout.tsx already paints <html data-theme> before paint,
+  // this just syncs React state to the real preference right after hydration.
+  const [mode, setMode] = useState<ColorMode>("light");
 
   useEffect(() => {
-    applyMode(mode);
-    // Only syncing the DOM attribute to the mode set elsewhere (toggleMode) — not a setState loop.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    const stored = readStoredMode();
+    if (stored) {
+      // Sync browser preference after hydration; SSR snapshot stays "light".
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setMode(stored);
+      applyMode(stored);
+    }
   }, []);
 
   function toggleMode() {
     setMode((prev) => {
       const next: ColorMode = prev === "light" ? "dark" : "light";
-      window.localStorage.setItem(STORAGE_KEY, next);
+      try {
+        window.localStorage.setItem(STORAGE_KEY, next);
+      } catch {
+        // Keep the toggle usable even if persistence fails.
+      }
       applyMode(next);
       return next;
     });

@@ -16,7 +16,15 @@ export function SettingsAlertsTab() {
 
   return (
     <div className="flex max-w-[620px] flex-col gap-4">
-      <p className="text-[12.5px]" style={{ color: "var(--muted)" }}>Where we reach you when money stops moving.</p>
+      <div
+        className="rounded-lg px-3 py-2.5 text-[12.5px] leading-relaxed"
+        style={{ background: "var(--warn-bg)", color: "var(--warn-text)" }}
+      >
+        Preview only — destinations and switches are not saved and do not configure operational alerts.
+      </div>
+      <p className="text-[12.5px]" style={{ color: "var(--muted)" }}>
+        Planned channels for when money stops moving.
+      </p>
       <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2">
         <label className="flex flex-col gap-1.5 text-[11.5px] font-semibold" style={{ color: "var(--muted)" }}>
           Alert email
@@ -37,6 +45,7 @@ export function SettingsAlertsTab() {
             <button
               type="button"
               role="switch"
+              aria-label={`${a.label}: ${enabled[a.id] ? "on" : "off"} (preview)`}
               aria-checked={enabled[a.id]}
               onClick={() => setEnabled((prev) => ({ ...prev, [a.id]: !prev[a.id] }))}
               className="relative h-6 w-10 flex-shrink-0 rounded-full transition-colors"
