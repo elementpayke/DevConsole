@@ -10,7 +10,7 @@ import {
   MERCHANT_TREASURY_CHAIN,
 } from "@/lib/merchantWallet";
 import {
-  requireMerchantSession,
+  requireAuthedSession,
   withRefreshedCookies,
 } from "@/lib/server/merchantRoute";
 
@@ -18,7 +18,7 @@ export async function POST(req: NextRequest) {
   const originBlock = assertTrustedOrigin(req);
   if (originBlock) return originBlock;
 
-  const ctx = await requireMerchantSession();
+  const ctx = await requireAuthedSession();
   if (ctx instanceof NextResponse) return ctx;
 
   let body: unknown;
