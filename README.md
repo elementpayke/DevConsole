@@ -85,9 +85,10 @@ client email; no email send yet), checkout method toggles, embed domain allowlis
 paybill account-number generation, refund-request recording.
 
 **Hosted vanity pages:** `elementpay-checkout` serves `/{slug}` and `/{slug}/l/{link}`
-against aggregator public APIs. Apex rewrite on `elementpay.net` is a deploy follow-up.
-M-Pesa STK / card capture on pay sessions is not attached yet — sessions are created and
-polled only.
+against aggregator public APIs. Apex rewrite on `elementpay-website` proxies unknown
+`elementpay.net/{slug}` paths to `pay.elementpay.net` (reserved marketing segments excluded).
+Embed runtime: `https://pay.elementpay.net/embed.js`. M-Pesa STK / card capture on pay
+sessions is not attached yet — sessions are created and polled only.
 
 **Still shell / ops-gated:** team invites, alert destinations, live C2B paybill
 provisioning (account numbers alone do not move money until ops provisions the shared

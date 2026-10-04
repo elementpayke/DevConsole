@@ -47,11 +47,13 @@ export function EmbedPanel() {
     }
   }
 
+  const snippet = `<script src="https://pay.elementpay.net/embed.js" data-merchant="${profile.slug}" async></script>`;
+
   return (
     <section className="flex flex-col gap-4 rounded-xl p-[18px]" style={{ background: "var(--panel)", border: "1px solid var(--border)" }}>
-      <span className="text-[16px] font-bold">Embed domains</span>
+      <span className="text-[16px] font-bold">Embed on your site</span>
       <p className="m-0 text-[12.5px]" style={{ color: "var(--muted)" }}>
-        Domains allowed to load checkout for {profile.slug}. The JS SDK host ships separately.
+        Allowlist the host that will load checkout for {profile.slug}, then paste the snippet.
       </p>
       {error && <p className="m-0 text-[12.5px]" style={{ color: "var(--bad-text)" }}>{error}</p>}
       <div className="flex flex-wrap gap-2">
@@ -75,6 +77,17 @@ export function EmbedPanel() {
           ))}
         </ul>
       )}
+      <label className="flex flex-col gap-1.5 text-[11.5px] font-semibold" style={{ color: "var(--muted)" }}>
+        Embed snippet
+        <textarea
+          readOnly
+          value={snippet}
+          rows={3}
+          className="mono rounded-lg p-2.5 text-[12px] font-normal"
+          style={{ border: "1px solid var(--border-strong)", background: "var(--panel-solid)", color: "var(--ink)", resize: "vertical" }}
+          onFocus={(e) => e.currentTarget.select()}
+        />
+      </label>
     </section>
   );
 }
