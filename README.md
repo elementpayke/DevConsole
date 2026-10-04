@@ -80,9 +80,15 @@ npm run build
 
 **Wired to the aggregator today:** auth/session, dashboard, transactions, API keys,
 reference tokens, merchant onboarding / vault attach, wallets balance (when linked),
-off-ramp quote/accept.
+off-ramp quote/accept, collect profile create/`me`, payment links, invoices (pay link +
+client email; no email send yet), checkout method toggles, embed domain allowlist,
+paybill account-number generation, refund-request recording.
 
-**Coming soon (UI only — no live shareable links):** Checkout payment links, invoices,
-embed SDK, Paybill account numbers, team invites, alert destinations, payment-method
-toggles. Do not treat those screens as live money movement until collect-profile APIs
-ship.
+**Hosted vanity pages:** `elementpay-checkout` serves `/{slug}` and `/{slug}/l/{link}`
+against aggregator public APIs. Apex rewrite on `elementpay.net` is a deploy follow-up.
+M-Pesa STK / card capture on pay sessions is not attached yet — sessions are created and
+polled only.
+
+**Still shell / ops-gated:** team invites, alert destinations, live C2B paybill
+provisioning (account numbers alone do not move money until ops provisions the shared
+paybill).
