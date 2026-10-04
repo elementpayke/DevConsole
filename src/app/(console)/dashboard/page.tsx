@@ -10,7 +10,7 @@ import { getDashboardStats } from "@/lib/api/dashboard";
 import { listMyOrders } from "@/lib/api/orders";
 import { ApiError } from "@/lib/api/client";
 import { statusStyle } from "@/lib/theme";
-import type { DashboardStats, Order } from "@/lib/types";
+import type { CurrencyStats, DashboardStats, Order } from "@/lib/types";
 
 /** Local-calendar day key (not UTC) so "today" matches the merchant's own clock. */
 function dayKey(date: Date) {
@@ -28,6 +28,19 @@ function last14Days() {
     days.push(dayKey(d));
   }
   return days;
+}
+
+/** Highest total_volume currency from dashboard stats (all-time aggregates). */
+function primaryFiatFromStats(
+  breakdown: Record<string, CurrencyStats>,
+): { currency: string; stats: CurrencyStats } | null {
+  let best: { currency: string; stats: CurrencyStats } | null = null;
+  for (const [currency, stats] of Object.entries(breakdown)) {
+    if (!best || stats.total_volume > best.stats.total_volume) {
+      best = { currency, stats };
+    }
+  }
+  return best;
 }
 
 /** Most frequent currency among recent orders — the chart only sums same-currency amounts. */
@@ -90,7 +103,9 @@ export default function DashboardPage() {
 
   const chart = useMemo(() => {
     const days = last14Days();
-    const currency = primaryCurrency(orders ?? []);
+    // Prefer the dashboard's highest-volume fiat so the sparkline matches Total volume.
+    const fromStats = stats ? primaryFiatFromStats(stats.fiat_breakdown)?.currency : null;
+    const currency = fromStats ?? primaryCurrency(orders ?? []);
     const totals = new Map<string, number>();
     for (const day of days) totals.set(day, 0);
     for (const o of orders ?? []) {
@@ -101,7 +116,7 @@ export default function DashboardPage() {
     const values = days.map((d) => totals.get(d) ?? 0);
     const max = Math.max(1, ...values);
     return { days, values, max, currency };
-  }, [orders]);
+  }, [orders, stats]);
 
   const recent = (orders ?? []).slice(0, 6);
 
@@ -225,6 +240,11 @@ function FullOverview({
   ];
 
   const todayTotal = chart.values[chart.values.length - 1] ?? 0;
+  const last14Total = chart.values.reduce((sum, v) => sum + v, 0);
+  const primaryFiat = primaryFiatFromStats(stats.fiat_breakdown);
+  const fiatEntries = Object.entries(stats.fiat_breakdown).sort(
+    (a, b) => b[1].total_volume - a[1].total_volume,
+  );
 
   return (
     <div className="flex flex-col gap-5">
@@ -247,20 +267,41 @@ function FullOverview({
       </div>
 
       <section className="overflow-hidden rounded-xl" style={{ background: "var(--panel)", border: "1px solid var(--border)" }}>
-        <div className="flex flex-wrap items-end gap-6 px-[22px] pt-[22px] pb-4">
+        <div className="flex flex-wrap items-end gap-8 px-[22px] pt-[22px] pb-4">
           <div className="flex flex-col gap-1">
             <span className="text-[11px] font-bold tracking-wide uppercase" style={{ color: "var(--muted)" }}>
-              Today
+              Total volume
             </span>
             <span className="mono text-[36px] leading-none font-bold">
-              {chart.currency ? `${chart.currency} ` : ""}
-              {todayTotal.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+              {primaryFiat
+                ? `${primaryFiat.currency} ${primaryFiat.stats.total_volume.toLocaleString(undefined, { maximumFractionDigits: 0 })}`
+                : "—"}
             </span>
             <span className="text-[12.5px]" style={{ color: "var(--muted)" }}>
-              {chart.currency
-                ? `${chart.currency} volume, last 14 days below`
-                : "Fiat volume, last 14 days below"}
+              {primaryFiat
+                ? `Settled ${primaryFiat.stats.settled_amount.toLocaleString(undefined, { maximumFractionDigits: 0 })} · ${primaryFiat.stats.transaction_count.toLocaleString()} orders`
+                : "No fiat volume yet"}
             </span>
+          </div>
+          <div className="flex flex-wrap gap-5 pb-0.5">
+            <div className="flex flex-col gap-0.5">
+              <span className="text-[11px] font-bold tracking-wide uppercase" style={{ color: "var(--muted)" }}>
+                Today
+              </span>
+              <span className="mono text-[18px] font-bold">
+                {chart.currency ? `${chart.currency} ` : ""}
+                {todayTotal.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+              </span>
+            </div>
+            <div className="flex flex-col gap-0.5">
+              <span className="text-[11px] font-bold tracking-wide uppercase" style={{ color: "var(--muted)" }}>
+                Last 14 days
+              </span>
+              <span className="mono text-[18px] font-bold">
+                {chart.currency ? `${chart.currency} ` : ""}
+                {last14Total.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+              </span>
+            </div>
           </div>
         </div>
         <div className="flex items-end gap-1.5 px-[22px]" style={{ height: 120 }}>
@@ -278,9 +319,64 @@ function FullOverview({
         </div>
         <div className="flex justify-between px-[22px] pt-2 pb-4 text-[11px]" style={{ color: "var(--faint)" }}>
           <span>{chart.days[0]}</span>
-          <span>{chart.days[chart.days.length - 1]}</span>
+          <span>
+            {chart.currency
+              ? `${chart.currency} volume from recent orders`
+              : "Fiat volume from recent orders"}
+            {" · "}
+            {chart.days[chart.days.length - 1]}
+          </span>
         </div>
       </section>
+
+      {fiatEntries.length > 0 && (
+        <section
+          className="overflow-hidden rounded-xl"
+          style={{ background: "var(--panel)", border: "1px solid var(--border)" }}
+        >
+          <div className="px-4 py-3.5">
+            <h2 className="m-0 text-[15px] font-bold">Volume by currency</h2>
+            <p className="m-0 mt-1 text-[12.5px]" style={{ color: "var(--muted)" }}>
+              Totals from your dashboard stats (all orders), not just the last 14 days.
+            </p>
+          </div>
+          <div className="grid gap-0 sm:grid-cols-2 lg:grid-cols-3">
+            {fiatEntries.map(([currency, cstats]) => (
+              <div
+                key={currency}
+                className="flex flex-col gap-2 px-4 py-3.5"
+                style={{ borderTop: "1px solid var(--line)" }}
+              >
+                <span className="text-[13.5px] font-bold">{currency}</span>
+                <div className="grid grid-cols-3 gap-2">
+                  <div>
+                    <div className="text-[10.5px] font-bold tracking-wide uppercase" style={{ color: "var(--faint)" }}>
+                      Volume
+                    </div>
+                    <div className="mono text-[13px] font-bold">
+                      {cstats.total_volume.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                    </div>
+                  </div>
+                  <div>
+                    <div className="text-[10.5px] font-bold tracking-wide uppercase" style={{ color: "var(--faint)" }}>
+                      Settled
+                    </div>
+                    <div className="mono text-[13px] font-bold">
+                      {cstats.settled_amount.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                    </div>
+                  </div>
+                  <div>
+                    <div className="text-[10.5px] font-bold tracking-wide uppercase" style={{ color: "var(--faint)" }}>
+                      Orders
+                    </div>
+                    <div className="mono text-[13px] font-bold">{cstats.transaction_count}</div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
 
       <section
         className="overflow-hidden rounded-xl"
