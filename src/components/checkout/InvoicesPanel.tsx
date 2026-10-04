@@ -1,154 +1,126 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/Button";
-import { newId, seedInvoices, type Invoice } from "@/lib/checkoutShellData";
-import { InvoiceDocModal } from "@/components/checkout/InvoiceDocModal";
-
-const STATUS_STYLE: Record<Invoice["status"], { bg: string; text: string }> = {
-  Draft: { bg: "var(--surface)", text: "var(--muted)" },
-  Sent: { bg: "var(--indigo-tint)", text: "var(--indigo-text)" },
-  Paid: { bg: "var(--ok-bg)", text: "var(--ok-text)" },
-  Overdue: { bg: "var(--bad-bg)", text: "var(--bad-text)" },
-};
+import {
+  absoluteCollectUrl,
+  createPaymentLink,
+  getMyCollectProfile,
+  listPaymentLinks,
+  type CollectProfile,
+  type PaymentLink,
+} from "@/lib/api/collect";
+import { ApiError } from "@/lib/api/client";
+import { ComingSoonPanel } from "@/components/checkout/ComingSoonPanel";
 
 export function InvoicesPanel() {
-  const [invoices, setInvoices] = useState<Invoice[]>(seedInvoices);
-  const [viewing, setViewing] = useState<Invoice | null>(null);
-  const [creating, setCreating] = useState(false);
-  const [client, setClient] = useState("");
-  const [email, setEmail] = useState("");
-  const [item, setItem] = useState("");
+  const [profile, setProfile] = useState<CollectProfile | null | undefined>(undefined);
+  const [rows, setRows] = useState<PaymentLink[]>([]);
+  const [title, setTitle] = useState("");
   const [amount, setAmount] = useState("");
+  const [email, setEmail] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
 
-  function createInvoice() {
-    if (!client.trim() || !amount.trim()) return;
-    const number = `INV-${1000 + invoices.length + 1}`;
-    setInvoices((prev) => [
-      {
-        id: newId("i"),
-        number,
-        client: client.trim(),
-        email: email.trim(),
-        item: item.trim() || "Services rendered",
-        amount: Number(amount) || 0,
-        currency: "KES",
-        due: "On receipt",
-        status: "Sent",
-      },
-      ...prev,
-    ]);
-    setClient("");
-    setEmail("");
-    setItem("");
-    setAmount("");
-    setCreating(false);
+  useEffect(() => {
+    getMyCollectProfile()
+      .then(async (me) => {
+        setProfile(me);
+        if (me) {
+          const all = await listPaymentLinks();
+          setRows(all.filter((r) => Boolean(r.client_email)));
+        }
+      })
+      .catch((err) => {
+        setProfile(null);
+        setError(err instanceof ApiError ? err.message : "Failed to load invoices");
+      });
+  }, []);
+
+  if (profile === undefined) {
+    return <p className="text-[13px]" style={{ color: "var(--muted)" }}>Loading invoices…</p>;
   }
 
-  const paid = invoices.filter((i) => i.status === "Paid").length;
-  const outstanding = invoices.filter((i) => i.status !== "Paid").reduce((s, i) => s + i.amount, 0);
+  if (!profile) {
+    return (
+      <ComingSoonPanel
+        title="Invoices"
+        description="Create a collect profile under Settings → Identity first. Invoices are one-time payment requests with a client email on record."
+      />
+    );
+  }
+
+  async function create() {
+    if (!title.trim() || !amount.trim() || !email.trim()) return;
+    const parsedAmount = Number(amount);
+    if (!Number.isFinite(parsedAmount) || parsedAmount <= 0) {
+      setError("Enter a valid amount greater than zero");
+      return;
+    }
+    setBusy(true);
+    setError(null);
+    try {
+      const row = await createPaymentLink({
+        title: title.trim(),
+        amount: parsedAmount,
+        kind: "one_time",
+        client_email: email.trim(),
+      });
+      setRows((prev) => [row, ...prev]);
+      setTitle("");
+      setAmount("");
+      setEmail("");
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Could not create invoice");
+    } finally {
+      setBusy(false);
+    }
+  }
 
   return (
     <section className="overflow-hidden rounded-xl" style={{ background: "var(--panel)", border: "1px solid var(--border)" }}>
-      <div className="flex flex-wrap items-center gap-3 p-4">
-        <span className="flex flex-col gap-0.5">
-          <span className="text-[16px] font-bold">Invoices</span>
-          <span className="text-[12.5px]" style={{ color: "var(--muted)" }}>Line items, a due date and a pay button.</span>
-        </span>
-        <Button type="button" className="ml-auto" onClick={() => setCreating((v) => !v)}>
-          New invoice
-        </Button>
+      <div className="p-4">
+        <span className="text-[16px] font-bold">Invoices</span>
+        <p className="m-0 mt-1 text-[12.5px]" style={{ color: "var(--muted)" }}>
+          One-time payment requests with a client email. Email delivery is not sent from Console yet — copy the pay link.
+        </p>
       </div>
-
-      <div
-        className="grid"
-        style={{ gridTemplateColumns: "repeat(auto-fit, minmax(130px, 1fr))", borderTop: "1px solid var(--line)", background: "var(--surface-soft)" }}
-      >
-        <Stat label="Paid" value={String(paid)} />
-        <Stat label="Outstanding" value={`KES ${outstanding.toLocaleString()}`} />
-        <Stat label="Total" value={String(invoices.length)} />
+      {error && <p className="px-4 pb-2 text-[12.5px]" style={{ color: "var(--bad-text)" }}>{error}</p>}
+      <div className="flex flex-wrap items-end gap-2.5 p-4" style={{ borderTop: "1px solid var(--line)" }}>
+        <label className="flex min-w-[140px] flex-1 flex-col gap-1 text-[11.5px] font-semibold" style={{ color: "var(--muted)" }}>
+          Title
+          <input value={title} onChange={(e) => setTitle(e.target.value)} className="rounded-lg px-3 py-2 text-[13.5px] font-normal" style={{ border: "1px solid var(--border-strong)", background: "var(--panel-solid)", color: "var(--ink)" }} />
+        </label>
+        <label className="flex w-[110px] flex-col gap-1 text-[11.5px] font-semibold" style={{ color: "var(--muted)" }}>
+          Amount
+          <input value={amount} onChange={(e) => setAmount(e.target.value)} inputMode="decimal" className="rounded-lg px-3 py-2 text-[13.5px] font-normal" style={{ border: "1px solid var(--border-strong)", background: "var(--panel-solid)", color: "var(--ink)" }} />
+        </label>
+        <label className="flex min-w-[180px] flex-1 flex-col gap-1 text-[11.5px] font-semibold" style={{ color: "var(--muted)" }}>
+          Client email
+          <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} className="rounded-lg px-3 py-2 text-[13.5px] font-normal" style={{ border: "1px solid var(--border-strong)", background: "var(--panel-solid)", color: "var(--ink)" }} />
+        </label>
+        <Button type="button" disabled={busy} onClick={create}>Create invoice</Button>
       </div>
-
-      {creating && (
-        <div className="flex flex-col gap-2.5 p-4" style={{ borderTop: "1px solid var(--line)" }}>
-          <div className="flex flex-wrap gap-2.5">
-            <Field label="Bill to">
-              <input value={client} onChange={(e) => setClient(e.target.value)} placeholder="Kesho Foods Ltd" style={inputStyle} />
-            </Field>
-            <Field label="Their email">
-              <input value={email} onChange={(e) => setEmail(e.target.value)} placeholder="accounts@kesho.co.ke" style={inputStyle} />
-            </Field>
-          </div>
-          <Field label="What it covers">
-            <input value={item} onChange={(e) => setItem(e.target.value)} placeholder="September supply — 40 crates" style={inputStyle} />
-          </Field>
-          <div className="flex flex-wrap items-end gap-2.5">
-            <Field label="Amount (KES)">
-              <input value={amount} onChange={(e) => setAmount(e.target.value)} inputMode="numeric" placeholder="84000" style={{ ...inputStyle, fontFamily: "var(--font-jetbrains-mono)" }} />
-            </Field>
-            <Button type="button" onClick={createInvoice}>Send invoice</Button>
-          </div>
+      {rows.length === 0 ? (
+        <div className="px-4 py-8 text-center text-[13px]" style={{ color: "var(--muted)", borderTop: "1px solid var(--line)" }}>
+          No invoices yet.
         </div>
-      )}
-
-      {invoices.map((inv) => {
-        const style = STATUS_STYLE[inv.status];
-        return (
-          <div key={inv.id} className="flex flex-wrap items-center gap-3 p-4" style={{ borderTop: "1px solid var(--line)" }}>
-            <span className="flex min-w-[180px] flex-1 flex-col gap-0.5">
-              <span className="flex items-center gap-2">
-                <span className="text-[13.5px] font-semibold">{inv.client}</span>
-                <span className="rounded-md px-1.5 py-0.5 text-[10.5px] font-bold" style={{ background: style.bg, color: style.text }}>
-                  {inv.status}
-                </span>
-              </span>
-              <span className="text-[12px]" style={{ color: "var(--muted)" }}>
-                <span className="mono">{inv.number}</span> · {inv.due}
+      ) : (
+        rows.map((row) => (
+          <div key={row.id} className="flex flex-wrap items-center gap-3 p-4" style={{ borderTop: "1px solid var(--line)" }}>
+            <span className="flex min-w-0 flex-1 flex-col gap-0.5">
+              <span className="text-[13.5px] font-bold">{row.title}</span>
+              <span className="text-[11.5px]" style={{ color: "var(--muted)" }}>{row.client_email}</span>
+              <span className="mono truncate text-[11.5px]" style={{ color: "var(--faint)" }}>
+                {absoluteCollectUrl(row.public_path)}
               </span>
             </span>
-            <span className="mono text-[13px] font-semibold whitespace-nowrap">
-              {inv.currency} {inv.amount.toLocaleString()}
+            <span className="mono text-[13px] font-semibold">
+              {row.currency} {row.amount.toLocaleString()}
             </span>
-            <button
-              type="button"
-              onClick={() => setViewing(inv)}
-              className="rounded-lg px-2.5 py-1.5 text-[12px] font-semibold"
-              style={{ border: "1px solid var(--border)", background: "var(--panel)" }}
-            >
-              View
-            </button>
           </div>
-        );
-      })}
-
-      {viewing && <InvoiceDocModal invoice={viewing} onClose={() => setViewing(null)} />}
+        ))
+      )}
     </section>
-  );
-}
-
-const inputStyle: React.CSSProperties = {
-  border: "1px solid var(--border-strong)",
-  background: "var(--panel-solid)",
-  borderRadius: 8,
-  padding: "8px 12px",
-  fontSize: 13.5,
-  width: "100%",
-};
-
-function Stat({ label, value }: { label: string; value: string }) {
-  return (
-    <span className="flex flex-col gap-0.5 p-3">
-      <span className="text-[11px] font-semibold" style={{ color: "var(--muted)" }}>{label}</span>
-      <span className="mono text-[15px] font-semibold">{value}</span>
-    </span>
-  );
-}
-
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <label className="flex min-w-[180px] flex-1 flex-col gap-1.5 text-[11.5px] font-semibold" style={{ color: "var(--muted)" }}>
-      {label}
-      {children}
-    </label>
   );
 }

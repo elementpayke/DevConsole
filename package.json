@@ -7,9 +7,10 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test": "tsx --test tests/**/*.test.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "tsx --test tests/*.test.ts",
     "test:security": "tsx --test tests/security.test.ts && bash scripts/check-client-bundle-secrets.sh",
-    "test:all": "npm run lint && npm run test && npm run build && bash scripts/check-client-bundle-secrets.sh"
+    "test:all": "npm run lint && npm run typecheck && npm run test && npm run build && bash scripts/check-client-bundle-secrets.sh"
   },
   "dependencies": {
     "@privy-io/react-auth": "^3.13.1",

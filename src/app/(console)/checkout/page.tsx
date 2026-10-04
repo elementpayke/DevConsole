@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useState } from "react";
+import { Suspense } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Header } from "@/components/layout/Header";
@@ -21,8 +21,8 @@ type TabId = (typeof TABS)[number]["id"];
 function CheckoutContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const tab = (searchParams.get("tab") as TabId) ?? "links";
-  const [previewOpen, setPreviewOpen] = useState(false);
+  const rawTab = searchParams.get("tab");
+  const tab: TabId = TABS.some((t) => t.id === rawTab) ? (rawTab as TabId) : "links";
 
   function setTab(next: TabId) {
     router.replace(`/checkout?tab=${next}`);
@@ -44,13 +44,13 @@ function CheckoutContent() {
             ⌸
           </span>
           <span className="flex min-w-[180px] flex-1 flex-col gap-0.5">
-            <span className="text-[13.5px] font-bold">Accept walk-in payments too</span>
+            <span className="text-[13.5px] font-bold">Paybill account numbers</span>
             <span className="text-[12px]" style={{ color: "var(--muted)" }}>
-              Get a till or paybill number for in-person collections.
+              Generate account references for in-person M-Pesa collections (ops still provisions the shared paybill).
             </span>
           </span>
           <span className="text-[12.5px] font-bold" style={{ color: "var(--indigo-text)" }}>
-            Paybill →
+            Details →
           </span>
         </Link>
 
@@ -63,7 +63,7 @@ function CheckoutContent() {
               Customer pays with
             </span>
             <span className="flex flex-wrap gap-1.5">
-              {["M-Pesa · Mobile money", "Visa · Cards", "USDC · USDT too"].map((label) => (
+              {["M-Pesa · STK", "Cards · Coming soon"].map((label) => (
                 <span
                   key={label}
                   className="rounded-lg px-2.5 py-1.5 text-[11.5px]"
@@ -106,53 +106,13 @@ function CheckoutContent() {
         </div>
 
         <div className="max-w-[920px]">
-          {tab === "links" && <PaymentLinksPanel onPreview={() => setPreviewOpen(true)} />}
+          {tab === "links" && <PaymentLinksPanel onPreview={() => undefined} />}
           {tab === "invoices" && <InvoicesPanel />}
           {tab === "embed" && <EmbedPanel />}
           {tab === "api" && <ApiModePanel />}
         </div>
       </div>
-
-      {previewOpen && (
-        <CheckoutPreviewPlaceholder onClose={() => setPreviewOpen(false)} />
-      )}
     </>
-  );
-}
-
-function CheckoutPreviewPlaceholder({ onClose }: { onClose: () => void }) {
-  return (
-    <div
-      onClick={onClose}
-      className="fixed inset-0 z-[1000] flex items-center justify-center p-5 backdrop-blur-sm"
-      style={{ background: "oklch(0.15 0.02 264 / 0.4)" }}
-    >
-      <div
-        onClick={(e) => e.stopPropagation()}
-        className="solid-card w-full max-w-[380px] overflow-hidden rounded-2xl"
-      >
-        <div className="flex items-center gap-3 border-b border-line px-4 py-3">
-          <span className="text-[13.5px] font-bold">Customer preview</span>
-          <button onClick={onClose} className="ml-auto cursor-pointer text-[13px] font-bold text-subtle">
-            Close
-          </button>
-        </div>
-        <div className="flex flex-col items-center gap-3 p-6 text-center">
-          <div
-            className="flex h-12 w-12 items-center justify-center rounded-xl text-[16px] font-bold"
-            style={{ background: "var(--indigo)", color: "var(--on-indigo)" }}
-          >
-            EP
-          </div>
-          <div className="text-[13px] font-semibold">Standard cart</div>
-          <div className="mono text-[28px] font-bold">KES 5,000</div>
-          <div className="w-full rounded-lg py-3 text-[13.5px] font-bold" style={{ background: "var(--indigo)", color: "var(--on-indigo)" }}>
-            Pay KES 5,000 →
-          </div>
-          <p className="text-[11px]" style={{ color: "var(--faint)" }}>Test preview. No money moves.</p>
-        </div>
-      </div>
-    </div>
   );
 }
 

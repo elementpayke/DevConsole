@@ -70,7 +70,26 @@ the BFF supplies the secret (Origin check is skipped on that path).
 
 ```bash
 npm run lint
+npm run typecheck
 npm run test          # unit + security checks
 npm run test:security # secret-leak / cookie flag checks
 npm run build
 ```
+
+## Real vs coming soon
+
+**Wired to the aggregator today:** auth/session, dashboard, transactions, API keys,
+reference tokens, merchant onboarding / vault attach, wallets balance (when linked),
+off-ramp quote/accept, collect profile create/`me`, payment links, invoices (pay link +
+client email; no email send yet), checkout method toggles, embed domain allowlist,
+paybill account-number generation, refund-request recording.
+
+**Hosted vanity pages:** `elementpay-checkout` serves `/{slug}` and `/{slug}/l/{link}`
+against aggregator public APIs. Apex rewrite on `elementpay-website` proxies unknown
+`elementpay.net/{slug}` paths to `pay.elementpay.net` (reserved marketing segments excluded).
+Embed runtime: `https://pay.elementpay.net/embed.js`. M-Pesa STK / card capture on pay
+sessions is not attached yet — sessions are created and polled only.
+
+**Still shell / ops-gated:** team invites, alert destinations, live C2B paybill
+provisioning (account numbers alone do not move money until ops provisions the shared
+paybill).

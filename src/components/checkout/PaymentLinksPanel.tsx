@@ -1,36 +1,99 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/Button";
-import { newId, seedLinks, type PaymentLink } from "@/lib/checkoutShellData";
+import {
+  absoluteCollectUrl,
+  createPaymentLink,
+  getMyCollectProfile,
+  listPaymentLinks,
+  type CollectProfile,
+  type PaymentLink,
+} from "@/lib/api/collect";
+import { ApiError } from "@/lib/api/client";
+import { ComingSoonPanel } from "@/components/checkout/ComingSoonPanel";
 
-export function PaymentLinksPanel({ onPreview }: { onPreview: () => void }) {
-  const [links, setLinks] = useState<PaymentLink[]>(seedLinks);
+export function PaymentLinksPanel({ onPreview: _onPreview }: { onPreview: () => void }) {
+  const [profile, setProfile] = useState<CollectProfile | null | undefined>(undefined);
+  const [links, setLinks] = useState<PaymentLink[]>([]);
+  const [error, setError] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
-  const [name, setName] = useState("");
+  const [title, setTitle] = useState("");
   const [amount, setAmount] = useState("");
-  const [type, setType] = useState<PaymentLink["type"]>("Reusable");
-  const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [kind, setKind] = useState<"reusable" | "one_time">("reusable");
+  const [copiedId, setCopiedId] = useState<number | null>(null);
+  const [busy, setBusy] = useState(false);
 
-  function createLink() {
-    if (!name.trim() || !amount.trim()) return;
-    setLinks((prev) => [
-      { id: newId("l"), name: name.trim(), amount: Number(amount) || 0, currency: "KES", type, active: true, paidCount: 0 },
-      ...prev,
-    ]);
-    setName("");
-    setAmount("");
-    setCreating(false);
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const me = await getMyCollectProfile();
+        if (cancelled) return;
+        setProfile(me);
+        if (me) setLinks(await listPaymentLinks());
+      } catch (err) {
+        if (!cancelled) {
+          setProfile(null);
+          setError(err instanceof ApiError ? err.message : "Failed to load payment links");
+        }
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  if (profile === undefined) {
+    return <p className="text-[13px]" style={{ color: "var(--muted)" }}>Loading payment links…</p>;
   }
 
-  function copyLink(id: string) {
-    const url = `https://pay.elementpay.net/c/${id}`;
-    navigator.clipboard?.writeText(url).catch(() => {});
-    setCopiedId(id);
-    window.setTimeout(() => setCopiedId((c) => (c === id ? null : c)), 2000);
+  if (!profile) {
+    return (
+      <ComingSoonPanel
+        title="Payment links"
+        description="Create a collect profile (shop slug) under Settings → Identity first. Then you can issue real elementpay.net/{slug}/l/… links here."
+      />
+    );
   }
 
-  const paidTotal = links.reduce((sum, l) => sum + l.paidCount, 0);
+  async function create() {
+    if (!title.trim() || !amount.trim()) return;
+    const parsedAmount = Number(amount);
+    if (!Number.isFinite(parsedAmount) || parsedAmount <= 0) {
+      setError("Enter a valid amount greater than zero");
+      return;
+    }
+    setBusy(true);
+    setError(null);
+    try {
+      const row = await createPaymentLink({
+        title: title.trim(),
+        amount: parsedAmount,
+        kind,
+      });
+      setLinks((prev) => [row, ...prev]);
+      setTitle("");
+      setAmount("");
+      setCreating(false);
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Could not create link");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function copyLink(link: PaymentLink) {
+    const url = absoluteCollectUrl(link.public_path);
+    if (!navigator.clipboard?.writeText) return;
+    try {
+      await navigator.clipboard.writeText(url);
+      setCopiedId(link.id);
+      window.setTimeout(() => setCopiedId((c) => (c === link.id ? null : c)), 2000);
+    } catch {
+      // Clipboard denied or unavailable — leave button label unchanged.
+    }
+  }
 
   return (
     <section className="overflow-hidden rounded-xl" style={{ background: "var(--panel)", border: "1px solid var(--border)" }}>
@@ -38,7 +101,7 @@ export function PaymentLinksPanel({ onPreview }: { onPreview: () => void }) {
         <span className="flex flex-col gap-0.5">
           <span className="text-[16px] font-bold">Payment links</span>
           <span className="text-[12.5px]" style={{ color: "var(--muted)" }}>
-            One link for many buyers, or one per order.
+            Live links for {profile.slug} · {absoluteCollectUrl(profile.public_path)}
           </span>
         </span>
         <Button type="button" className="ml-auto" onClick={() => setCreating((v) => !v)}>
@@ -46,105 +109,56 @@ export function PaymentLinksPanel({ onPreview }: { onPreview: () => void }) {
         </Button>
       </div>
 
-      <div
-        className="grid"
-        style={{ gridTemplateColumns: "repeat(auto-fit, minmax(130px, 1fr))", borderTop: "1px solid var(--line)", background: "var(--surface-soft)" }}
-      >
-        <Stat label="Active links" value={String(links.filter((l) => l.active).length)} />
-        <Stat label="Total paid" value={String(paidTotal)} />
-        <Stat label="Links created" value={String(links.length)} />
-      </div>
+      {error && (
+        <p className="px-4 pb-2 text-[12.5px]" style={{ color: "var(--bad-text)" }}>{error}</p>
+      )}
 
       {creating && (
         <div className="flex flex-wrap items-end gap-2.5 p-4" style={{ borderTop: "1px solid var(--line)" }}>
-          <Field label="Name">
-            <input
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="Standard cart"
-              className="w-full rounded-lg px-3 py-2 text-[13.5px]"
-              style={{ border: "1px solid var(--border-strong)", background: "var(--panel-solid)" }}
-            />
-          </Field>
-          <Field label="Amount (KES)">
-            <input
-              value={amount}
-              onChange={(e) => setAmount(e.target.value)}
-              placeholder="5000"
-              inputMode="numeric"
-              className="mono w-full rounded-lg px-3 py-2 text-[13.5px]"
-              style={{ border: "1px solid var(--border-strong)", background: "var(--panel-solid)" }}
-            />
-          </Field>
-          <Field label="Type">
-            <select
-              value={type}
-              onChange={(e) => setType(e.target.value as PaymentLink["type"])}
-              className="rounded-lg px-3 py-2 text-[13.5px]"
-              style={{ border: "1px solid var(--border-strong)", background: "var(--panel-solid)" }}
-            >
-              <option value="Reusable">Reusable</option>
-              <option value="One-time">One-time</option>
+          <label className="flex min-w-[160px] flex-1 flex-col gap-1 text-[11.5px] font-semibold" style={{ color: "var(--muted)" }}>
+            Name
+            <input value={title} onChange={(e) => setTitle(e.target.value)} className="rounded-lg px-3 py-2 text-[13.5px] font-normal" style={{ border: "1px solid var(--border-strong)", background: "var(--panel-solid)", color: "var(--ink)" }} />
+          </label>
+          <label className="flex w-[120px] flex-col gap-1 text-[11.5px] font-semibold" style={{ color: "var(--muted)" }}>
+            Amount
+            <input value={amount} onChange={(e) => setAmount(e.target.value)} inputMode="decimal" className="rounded-lg px-3 py-2 text-[13.5px] font-normal" style={{ border: "1px solid var(--border-strong)", background: "var(--panel-solid)", color: "var(--ink)" }} />
+          </label>
+          <label className="flex w-[140px] flex-col gap-1 text-[11.5px] font-semibold" style={{ color: "var(--muted)" }}>
+            Type
+            <select value={kind} onChange={(e) => setKind(e.target.value as "reusable" | "one_time")} className="rounded-lg px-3 py-2 text-[13.5px] font-normal" style={{ border: "1px solid var(--border-strong)", background: "var(--panel-solid)", color: "var(--ink)" }}>
+              <option value="reusable">Reusable</option>
+              <option value="one_time">One-time</option>
             </select>
-          </Field>
-          <Button type="button" onClick={createLink}>Create</Button>
+          </label>
+          <Button type="button" disabled={busy} onClick={create}>Create</Button>
         </div>
       )}
 
-      {links.map((l) => (
-        <div key={l.id} className="flex flex-wrap items-center gap-3 p-4" style={{ borderTop: "1px solid var(--line)" }}>
-          <span className="flex min-w-[180px] flex-1 flex-col gap-0.5">
-            <span className="flex items-center gap-2">
-              <span className="text-[13.5px] font-semibold">{l.name}</span>
-              <span
-                className="rounded-md px-1.5 py-0.5 text-[10.5px] font-bold"
-                style={{ background: l.active ? "var(--ok-bg)" : "var(--surface)", color: l.active ? "var(--ok-text)" : "var(--muted)" }}
-              >
-                {l.active ? "Active" : "Disabled"}
+      {links.length === 0 ? (
+        <div className="px-4 py-8 text-center text-[13px]" style={{ color: "var(--muted)", borderTop: "1px solid var(--line)" }}>
+          No payment links yet.
+        </div>
+      ) : (
+        links.map((link) => (
+          <div key={link.id} className="flex flex-wrap items-center gap-3 p-4" style={{ borderTop: "1px solid var(--line)" }}>
+            <span className="flex min-w-0 flex-1 flex-col gap-0.5">
+              <span className="text-[13.5px] font-bold">{link.title}</span>
+              <span className="mono truncate text-[11.5px]" style={{ color: "var(--faint)" }}>
+                {absoluteCollectUrl(link.public_path)}
               </span>
             </span>
-            <span className="text-[12px]" style={{ color: "var(--muted)" }}>
-              {l.currency} {l.amount.toLocaleString()} · {l.type} · {l.paidCount} paid
-            </span>
-          </span>
-          <div className="flex gap-1.5">
+            <span className="mono text-[13px] font-semibold">{link.currency} {link.amount.toLocaleString()}</span>
             <button
               type="button"
-              onClick={onPreview}
-              className="rounded-lg px-2.5 py-1.5 text-[12px] font-semibold"
-              style={{ border: "1px solid var(--border)", background: "var(--panel)" }}
+              onClick={() => copyLink(link)}
+              className="rounded-lg px-3 py-2 text-[12.5px] font-bold"
+              style={{ border: "1px solid var(--border-strong)", background: "var(--panel)" }}
             >
-              Preview
-            </button>
-            <button
-              type="button"
-              onClick={() => copyLink(l.id)}
-              className="rounded-lg px-2.5 py-1.5 text-[12px] font-semibold"
-              style={{ border: "1px solid var(--border)", background: "var(--panel)" }}
-            >
-              {copiedId === l.id ? "Copied" : "Copy link"}
+              {copiedId === link.id ? "Copied" : "Copy link"}
             </button>
           </div>
-        </div>
-      ))}
+        ))
+      )}
     </section>
-  );
-}
-
-function Stat({ label, value }: { label: string; value: string }) {
-  return (
-    <span className="flex flex-col gap-0.5 p-3">
-      <span className="text-[11px] font-semibold" style={{ color: "var(--muted)" }}>{label}</span>
-      <span className="mono text-[15px] font-semibold">{value}</span>
-    </span>
-  );
-}
-
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <label className="flex min-w-[140px] flex-1 flex-col gap-1.5 text-[11.5px] font-semibold" style={{ color: "var(--muted)" }}>
-      {label}
-      {children}
-    </label>
   );
 }

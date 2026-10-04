@@ -18,6 +18,7 @@ import { SettingsTeamTab } from "@/components/settings/SettingsTeamTab";
 import { SettingsAlertsTab } from "@/components/settings/SettingsAlertsTab";
 import { SettingsComplianceTab } from "@/components/settings/SettingsComplianceTab";
 import { SettingsActivityTab } from "@/components/settings/SettingsActivityTab";
+import { CollectProfileCard } from "@/components/settings/CollectProfileCard";
 
 const TABS = [
   { id: "identity", label: "Identity" },
@@ -125,6 +126,8 @@ export default function ProfilePage() {
 
         {tab === "identity" && (
           <div className="flex flex-col gap-5">
+            <CollectProfileCard />
+
             <GlassCard className="p-[22px]">
               <div className="mb-4 text-[14.5px] font-bold">Account details</div>
               <div className="grid grid-cols-2 gap-3.5">
