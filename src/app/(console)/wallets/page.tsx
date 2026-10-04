@@ -15,7 +15,7 @@ import { WalletTransferModal } from "@/components/wallets/WalletTransferModal";
 type Balance = { balance_usdc: number | null; has_account: boolean; balance_status: string };
 
 export default function WalletsPage() {
-  const { isMerchant } = useMerchantExperience();
+  const { partnerCustomerId } = useMerchantExperience();
   const [wallet, setWallet] = useState<LinkedWallet | null | undefined>(undefined);
   const [balance, setBalance] = useState<Balance | null>(null);
   const [movements, setMovements] = useState<Order[]>([]);
@@ -55,43 +55,15 @@ export default function WalletsPage() {
     };
   }, []);
 
-  if (!isMerchant) {
-    return (
-      <>
-        <Header title="Wallets" />
-        <div className="flex flex-col gap-3 p-5 md:p-7">
-          <p className="m-0 text-[13px] leading-relaxed" style={{ color: "var(--muted)" }}>
-            Link a payout wallet to collect and withdraw once your account has a collect profile
-            with a vault customer. Until then you can still use{" "}
-            <Link href="/api-keys" style={{ color: "var(--indigo)" }}>API Keys</Link>
-            {" "}and the{" "}
-            <Link href="/reference" style={{ color: "var(--indigo)" }}>API reference</Link>.
-          </p>
-          <div
-            className="rounded-lg px-3 py-2.5 text-[12.5px] leading-relaxed"
-            style={{ background: "var(--warn-bg)", color: "var(--warn-text)", maxWidth: 520 }}
-          >
-            Setup required — complete merchant onboarding (or attach a vault customer) to manage
-            balances here.
-          </div>
-          <Link
-            href="/onboarding"
-            className="w-fit rounded-lg px-4 py-2.5 text-[13px] font-bold no-underline"
-            style={{ background: "var(--indigo)", color: "var(--on-indigo)" }}
-          >
-            Start setup
-          </Link>
-        </div>
-      </>
-    );
-  }
+  const needsVault = !partnerCustomerId;
+  const needsWallet = wallet === null;
 
   const balanceLabel =
     balance?.balance_status === "ok" && balance.balance_usdc != null
       ? `$${balance.balance_usdc.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
       : wallet
         ? "—"
-        : "No wallet linked";
+        : "No wallet yet";
 
   return (
     <>
@@ -101,6 +73,26 @@ export default function WalletsPage() {
           <p className="rounded-lg border p-3 text-[13px]" style={{ borderColor: "var(--border-strong)", background: "var(--panel)", color: "var(--bad-text)" }}>
             {error}
           </p>
+        )}
+
+        {(needsVault || needsWallet) && (
+          <div
+            className="flex flex-wrap items-center gap-3 rounded-lg px-3.5 py-3 text-[12.5px] leading-relaxed"
+            style={{ background: "var(--warn-bg)", color: "var(--warn-text)", maxWidth: 720 }}
+          >
+            <span className="min-w-0 flex-1">
+              {needsWallet
+                ? "Create a Base USDC treasury wallet (Privy embedded), then we register it with ElementPay. Same for developers and merchants."
+                : "Attach a vault customer to unlock live balances and Off-ramp payouts."}
+            </span>
+            <Link
+              href={needsWallet ? "/account/setup" : "/settings"}
+              className="shrink-0 rounded-lg px-3 py-2 text-[12.5px] font-bold no-underline"
+              style={{ background: "var(--indigo)", color: "var(--on-indigo)" }}
+            >
+              {needsWallet ? "Create wallet" : "Open Settings"}
+            </Link>
+          </div>
         )}
 
         <Link
@@ -132,18 +124,30 @@ export default function WalletsPage() {
               </span>
               <span className="mono text-[38px] leading-none font-bold">{balanceLabel}</span>
               <span className="text-[12.5px]" style={{ color: "var(--muted)" }}>
-                {wallet ? "This is your treasury wallet for Off-ramp." : "Link a wallet to fund withdrawals."}
+                {wallet
+                  ? "This is your treasury wallet for Off-ramp."
+                  : "Create a wallet to collect and withdraw."}
               </span>
             </div>
             <div className="flex flex-wrap gap-2">
-              <button
-                type="button"
-                onClick={() => setModal("topup")}
-                className="flex-1 rounded-lg px-4 py-2.5 text-[13px] font-bold"
-                style={{ background: "var(--indigo)", color: "var(--on-indigo)" }}
-              >
-                Top up
-              </button>
+              {needsWallet ? (
+                <Link
+                  href="/account/setup"
+                  className="flex-1 rounded-lg px-4 py-2.5 text-center text-[13px] font-bold no-underline"
+                  style={{ background: "var(--indigo)", color: "var(--on-indigo)" }}
+                >
+                  Create wallet
+                </Link>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setModal("topup")}
+                  className="flex-1 rounded-lg px-4 py-2.5 text-[13px] font-bold"
+                  style={{ background: "var(--indigo)", color: "var(--on-indigo)" }}
+                >
+                  Top up
+                </button>
+              )}
               <Link
                 href="/offramp"
                 className="flex-1 rounded-lg px-4 py-2.5 text-center text-[13px] font-semibold no-underline"
@@ -171,9 +175,9 @@ export default function WalletsPage() {
             </span>
             <Fact label="Network" value="Base" />
             <Fact label="Address" value={wallet ? `${wallet.address.slice(0, 10)}…${wallet.address.slice(-6)}` : "—"} mono />
-            <Fact label="Status" value={wallet ? wallet.status : "Not linked"} />
+            <Fact label="Status" value={wallet ? wallet.status : "Not created"} />
             <Link href="/account/setup" className="mt-auto text-[12.5px] font-bold no-underline" style={{ color: "var(--indigo)" }}>
-              Change payout destination
+              {needsWallet ? "Create payout wallet" : "Manage payout wallet"}
             </Link>
           </div>
         </div>

@@ -45,7 +45,8 @@ export async function resolveUserWithTokenRefresh(
   return { user, accessToken: token, refreshed: rotated };
 }
 
-export async function requireMerchantSession(): Promise<
+/** Any signed-in Console user (developer or merchant). */
+export async function requireAuthedSession(): Promise<
   MerchantSessionContext | NextResponse
 > {
   const session = await resolveSessionAccessToken();
@@ -61,15 +62,27 @@ export async function requireMerchantSession(): Promise<
   if (!resolved) {
     return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
   }
-  const { user, accessToken, refreshed } = resolved;
-  if (user.role !== "merchant") {
+
+  return {
+    user: resolved.user,
+    accessToken: resolved.accessToken,
+    refreshed: resolved.refreshed,
+  };
+}
+
+/** Vault / payment-account routes that still require role=merchant. */
+export async function requireMerchantSession(): Promise<
+  MerchantSessionContext | NextResponse
+> {
+  const ctx = await requireAuthedSession();
+  if (ctx instanceof NextResponse) return ctx;
+  if (ctx.user.role !== "merchant") {
     return NextResponse.json(
       { message: "Merchant access only" },
       { status: 403 },
     );
   }
-
-  return { user, accessToken, refreshed };
+  return ctx;
 }
 
 export function withRefreshedCookies(

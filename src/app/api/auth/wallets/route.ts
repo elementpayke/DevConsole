@@ -5,13 +5,13 @@ import {
   nextResponseFromUpstream,
 } from "@/lib/server/aggregator";
 import {
-  requireMerchantSession,
+  requireAuthedSession,
   withRefreshedCookies,
 } from "@/lib/server/merchantRoute";
 import { unwrapLinkedWalletsFromApi } from "@/lib/merchantWallet";
 
 export async function GET() {
-  const ctx = await requireMerchantSession();
+  const ctx = await requireAuthedSession();
   if (ctx instanceof NextResponse) return ctx;
 
   try {

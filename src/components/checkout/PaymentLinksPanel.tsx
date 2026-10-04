@@ -20,6 +20,7 @@ export function PaymentLinksPanel({ onPreview: _onPreview }: { onPreview: () => 
   const [creating, setCreating] = useState(false);
   const [title, setTitle] = useState("");
   const [amount, setAmount] = useState("");
+  const [currency, setCurrency] = useState<"KES" | "USDC">("KES");
   const [kind, setKind] = useState<"reusable" | "one_time">("reusable");
   const [copiedId, setCopiedId] = useState<number | null>(null);
   const [busy, setBusy] = useState(false);
@@ -70,11 +71,13 @@ export function PaymentLinksPanel({ onPreview: _onPreview }: { onPreview: () => 
       const row = await createPaymentLink({
         title: title.trim(),
         amount: parsedAmount,
+        currency,
         kind,
       });
       setLinks((prev) => [row, ...prev]);
       setTitle("");
       setAmount("");
+      setCurrency("KES");
       setCreating(false);
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Could not create link");
@@ -101,7 +104,8 @@ export function PaymentLinksPanel({ onPreview: _onPreview }: { onPreview: () => 
         <span className="flex flex-col gap-0.5">
           <span className="text-[16px] font-bold">Payment links</span>
           <span className="text-[12.5px]" style={{ color: "var(--muted)" }}>
-            Live links for {profile.slug} · {absoluteCollectUrl(profile.public_path)}
+            Live links for {profile.slug} · KES → M-Pesa; USDC → multi-chain pay into your Stellar home
+            (customer pays bridge fees)
           </span>
         </span>
         <Button type="button" className="ml-auto" onClick={() => setCreating((v) => !v)}>
@@ -122,6 +126,13 @@ export function PaymentLinksPanel({ onPreview: _onPreview }: { onPreview: () => 
           <label className="flex w-[120px] flex-col gap-1 text-[11.5px] font-semibold" style={{ color: "var(--muted)" }}>
             Amount
             <input value={amount} onChange={(e) => setAmount(e.target.value)} inputMode="decimal" className="rounded-lg px-3 py-2 text-[13.5px] font-normal" style={{ border: "1px solid var(--border-strong)", background: "var(--panel-solid)", color: "var(--ink)" }} />
+          </label>
+          <label className="flex w-[110px] flex-col gap-1 text-[11.5px] font-semibold" style={{ color: "var(--muted)" }}>
+            Currency
+            <select value={currency} onChange={(e) => setCurrency(e.target.value as "KES" | "USDC")} className="rounded-lg px-3 py-2 text-[13.5px] font-normal" style={{ border: "1px solid var(--border-strong)", background: "var(--panel-solid)", color: "var(--ink)" }}>
+              <option value="KES">KES</option>
+              <option value="USDC">USDC</option>
+            </select>
           </label>
           <label className="flex w-[140px] flex-col gap-1 text-[11.5px] font-semibold" style={{ color: "var(--muted)" }}>
             Type

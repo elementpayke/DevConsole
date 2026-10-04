@@ -7,7 +7,7 @@ import {
 } from "@/lib/server/aggregator";
 import { refreshTokens } from "@/lib/server/session";
 import {
-  requireMerchantSession,
+  requireAuthedSession,
   withRefreshedCookies,
 } from "@/lib/server/merchantRoute";
 
@@ -19,11 +19,11 @@ export async function POST(req: NextRequest) {
   const originBlock = assertTrustedOrigin(req);
   if (originBlock) return originBlock;
 
-  const merchant = await requireMerchantSession();
-  if (merchant instanceof NextResponse) return merchant;
+  const session = await requireAuthedSession();
+  if (session instanceof NextResponse) return session;
 
-  let accessToken = merchant.accessToken;
-  let refreshed = merchant.refreshed;
+  let accessToken = session.accessToken;
+  let refreshed = session.refreshed;
 
   try {
     let upstream = await fetchAggregator("/auth/privy/token", {

@@ -1,25 +1,15 @@
 "use client";
 
-import { useEffect } from "react";
-import { useRouter } from "next/navigation";
 import { Header } from "@/components/layout/Header";
 import { MerchantPrivyShell } from "@/components/merchant/MerchantPrivyShell";
 import { MerchantWalletSetupPanel } from "@/components/merchant/MerchantWalletSetupPanel";
 import { useAuth } from "@/lib/auth/AuthContext";
-import { useMerchantExperience } from "@/lib/auth/useMerchantExperience";
 
+/** Payout wallet linking — available to developers and merchants (capability, not role). */
 export default function MerchantAccountSetupPage() {
-  const router = useRouter();
   const { isHydrated } = useAuth();
-  const { isMerchant } = useMerchantExperience();
 
-  useEffect(() => {
-    if (isHydrated && !isMerchant) {
-      router.replace("/dashboard");
-    }
-  }, [isHydrated, isMerchant, router]);
-
-  if (!isHydrated || !isMerchant) {
+  if (!isHydrated) {
     return null;
   }
 
