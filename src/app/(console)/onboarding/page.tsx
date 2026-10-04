@@ -126,7 +126,7 @@ export default function MerchantOnboardingPage() {
               Registration number
               <input
                 required
-                style={{ ...inputStyle, fontFamily: "var(--font-jetbrains-mono)" }}
+                style={{ ...inputStyle, fontFamily: "var(--font-ibm-plex-mono)" }}
                 value={registrationNumber}
                 onChange={(e) => setRegistrationNumber(e.target.value)}
               />
@@ -138,7 +138,7 @@ export default function MerchantOnboardingPage() {
             <label className="flex flex-col gap-1.5 text-[11.5px] font-semibold" style={{ color: "var(--muted)" }}>
               Phone (optional)
               <input
-                style={{ ...inputStyle, fontFamily: "var(--font-jetbrains-mono)" }}
+                style={{ ...inputStyle, fontFamily: "var(--font-ibm-plex-mono)" }}
                 placeholder="+255…"
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}

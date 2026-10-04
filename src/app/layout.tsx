@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Manrope, JetBrains_Mono } from "next/font/google";
+import { Barlow, Barlow_Condensed, IBM_Plex_Mono } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/lib/auth/AuthContext";
 import { EnvProvider } from "@/lib/env/EnvContext";
@@ -7,16 +7,23 @@ import { ThemeProvider } from "@/lib/theme/ThemeContext";
 
 const THEME_INIT_SCRIPT = `try{var m=localStorage.getItem("ep-color-mode");if(m==="dark")document.documentElement.dataset.theme="dark";}catch(e){}`;
 
-const manrope = Manrope({
-  variable: "--font-manrope",
+/** Industry / Console v4: Barlow body, Barlow Condensed headings, IBM Plex Mono. */
+const barlow = Barlow({
+  variable: "--font-barlow",
   subsets: ["latin"],
-  weight: ["400", "500", "600", "700", "800"],
+  weight: ["400", "500", "600", "700"],
 });
 
-const jetbrainsMono = JetBrains_Mono({
-  variable: "--font-jetbrains-mono",
+const barlowCondensed = Barlow_Condensed({
+  variable: "--font-barlow-condensed",
   subsets: ["latin"],
-  weight: ["400", "500", "600"],
+  weight: ["500", "600", "700"],
+});
+
+const ibmPlexMono = IBM_Plex_Mono({
+  variable: "--font-ibm-plex-mono",
+  subsets: ["latin"],
+  weight: ["400", "500"],
 });
 
 export const metadata: Metadata = {
@@ -32,11 +39,21 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${manrope.variable} ${jetbrainsMono.variable}`}
+      className={`${barlow.variable} ${barlowCondensed.variable} ${ibmPlexMono.variable}`}
       suppressHydrationWarning
     >
       <head>
         <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
+        <style
+          dangerouslySetInnerHTML={{
+            __html: `
+:root {
+  --font-heading: "D-DIN-Bold", "D-DIN", var(--font-barlow-condensed), "Barlow Condensed", var(--font-barlow), "Barlow", sans-serif;
+  --font-body: "D-DIN", var(--font-barlow), "Barlow", system-ui, sans-serif;
+}
+`,
+          }}
+        />
       </head>
       <body>
         <ThemeProvider>
