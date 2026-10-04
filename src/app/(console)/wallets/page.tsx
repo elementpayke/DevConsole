@@ -63,7 +63,7 @@ export default function WalletsPage() {
       ? `$${balance.balance_usdc.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
       : wallet
         ? "—"
-        : "No wallet linked";
+        : "No wallet yet";
 
   return (
     <>
@@ -82,7 +82,7 @@ export default function WalletsPage() {
           >
             <span className="min-w-0 flex-1">
               {needsWallet
-                ? "Link a payout wallet to collect and withdraw. Same setup for developers and merchants."
+                ? "Create a Base USDC treasury wallet (Privy embedded), then we register it with ElementPay. Same for developers and merchants."
                 : "Attach a vault customer to unlock live balances and Off-ramp payouts."}
             </span>
             <Link
@@ -90,7 +90,7 @@ export default function WalletsPage() {
               className="shrink-0 rounded-lg px-3 py-2 text-[12.5px] font-bold no-underline"
               style={{ background: "var(--indigo)", color: "var(--on-indigo)" }}
             >
-              {needsWallet ? "Link wallet" : "Open Settings"}
+              {needsWallet ? "Create wallet" : "Open Settings"}
             </Link>
           </div>
         )}
@@ -124,18 +124,30 @@ export default function WalletsPage() {
               </span>
               <span className="mono text-[38px] leading-none font-bold">{balanceLabel}</span>
               <span className="text-[12.5px]" style={{ color: "var(--muted)" }}>
-                {wallet ? "This is your treasury wallet for Off-ramp." : "Link a wallet to fund withdrawals."}
+                {wallet
+                  ? "This is your treasury wallet for Off-ramp."
+                  : "Create a wallet to collect and withdraw."}
               </span>
             </div>
             <div className="flex flex-wrap gap-2">
-              <button
-                type="button"
-                onClick={() => setModal("topup")}
-                className="flex-1 rounded-lg px-4 py-2.5 text-[13px] font-bold"
-                style={{ background: "var(--indigo)", color: "var(--on-indigo)" }}
-              >
-                Top up
-              </button>
+              {needsWallet ? (
+                <Link
+                  href="/account/setup"
+                  className="flex-1 rounded-lg px-4 py-2.5 text-center text-[13px] font-bold no-underline"
+                  style={{ background: "var(--indigo)", color: "var(--on-indigo)" }}
+                >
+                  Create wallet
+                </Link>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setModal("topup")}
+                  className="flex-1 rounded-lg px-4 py-2.5 text-[13px] font-bold"
+                  style={{ background: "var(--indigo)", color: "var(--on-indigo)" }}
+                >
+                  Top up
+                </button>
+              )}
               <Link
                 href="/offramp"
                 className="flex-1 rounded-lg px-4 py-2.5 text-center text-[13px] font-semibold no-underline"
@@ -163,9 +175,9 @@ export default function WalletsPage() {
             </span>
             <Fact label="Network" value="Base" />
             <Fact label="Address" value={wallet ? `${wallet.address.slice(0, 10)}…${wallet.address.slice(-6)}` : "—"} mono />
-            <Fact label="Status" value={wallet ? wallet.status : "Not linked"} />
+            <Fact label="Status" value={wallet ? wallet.status : "Not created"} />
             <Link href="/account/setup" className="mt-auto text-[12.5px] font-bold no-underline" style={{ color: "var(--indigo)" }}>
-              Change payout destination
+              {needsWallet ? "Create payout wallet" : "Manage payout wallet"}
             </Link>
           </div>
         </div>

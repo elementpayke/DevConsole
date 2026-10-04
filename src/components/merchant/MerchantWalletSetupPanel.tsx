@@ -150,10 +150,11 @@ export function MerchantWalletSetupPanel() {
 
   return (
     <section className="rounded-xl p-5" style={{ background: "var(--panel)", border: "1px solid var(--border)" }}>
-      <h2 className="text-lg font-bold">Set up your payment account</h2>
+      <h2 className="text-lg font-bold">Create your payout wallet</h2>
       <p className="mt-2 text-[13px]" style={{ color: "var(--muted)" }}>
-        ElementPay uses this account for your collections and Off-ramp withdrawals. If you
-        already use ElementPay with the same email, we reuse your existing account.
+        We create an embedded Base wallet (Privy), then register it with ElementPay via{" "}
+        <span className="mono text-[12px]">/auth/connect-wallet</span> for collections and
+        Off-ramp. If you already use ElementPay with the same email, we reuse that account.
       </p>
       {error && (
         <p className="mt-3 text-[12.5px] font-medium" style={{ color: "var(--bad-text)" }}>{error}</p>
@@ -163,7 +164,7 @@ export function MerchantWalletSetupPanel() {
         disabled={busy || !ready}
         onClick={() => void handleSetup()}
       >
-        {busy ? "Setting up…" : "Activate account"}
+        {busy ? "Creating…" : "Create wallet"}
       </Button>
     </section>
   );
