@@ -145,7 +145,7 @@ export function CheckoutSimPanel() {
 
       <div className="relative flex flex-1 items-center justify-center">
         <div
-          className="w-full max-w-[320px] overflow-hidden rounded-[18px] border border-line bg-white"
+          className="force-light-surface w-full max-w-[320px] overflow-hidden rounded-[18px] border border-line bg-white"
           style={{ boxShadow: "0 24px 50px -24px rgba(67,57,202,0.35)" }}
         >
           <div className="flex items-center gap-1.5 border-b border-[#eceef0] bg-[#f6f7f8] px-3.5 py-2.5">
@@ -296,7 +296,7 @@ export function CheckoutSimPanel() {
 
       <div
         key={tickerIndex}
-        className="relative flex animate-fade-in items-center gap-2.5 rounded-xl border border-line bg-white px-3.5 py-3"
+        className="force-light-surface relative flex animate-fade-in items-center gap-2.5 rounded-xl border border-line bg-white px-3.5 py-3"
       >
         <span className="h-2 w-2 flex-shrink-0 rounded-full bg-[oklch(0.6_0.16_152)]" />
         <span className="flex-1 text-[12.5px] text-muted">{currentTicker.text}</span>

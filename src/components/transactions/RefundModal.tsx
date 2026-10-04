@@ -7,9 +7,11 @@ import { createRefundRequest } from "@/lib/api/collect";
 import { ApiError } from "@/lib/api/client";
 import type { Order } from "@/lib/types";
 
+const SUCCESS_STATUSES = new Set(["pending", "acknowledged"]);
+
 export function RefundModal({ order, onClose }: { order: Order; onClose: () => void }) {
   const [reason, setReason] = useState("");
-  const [submitted, setSubmitted] = useState<{ message: string } | null>(null);
+  const [submitted, setSubmitted] = useState<{ message: string; ok: boolean } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -18,9 +20,16 @@ export function RefundModal({ order, onClose }: { order: Order; onClose: () => v
     setError(null);
     try {
       const res = await createRefundRequest({ order_id: order.order_id, reason: reason.trim() || undefined });
-      setSubmitted({ message: res.message });
+      setSubmitted({
+        message: res.message,
+        ok: SUCCESS_STATUSES.has(String(res.status).toLowerCase()),
+      });
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Could not record refund request");
+      setError(
+        err instanceof ApiError
+          ? err.message
+          : `Could not record refund request${err instanceof Error ? `: ${err.message}` : ""}`,
+      );
     } finally {
       setBusy(false);
     }
@@ -33,7 +42,14 @@ export function RefundModal({ order, onClose }: { order: Order; onClose: () => v
         <span className="mono">{order.order_id.slice(0, 14)}</span> · {order.currency} {order.amount_fiat.toLocaleString()}
       </p>
       {submitted ? (
-        <div className="rounded-lg p-3 text-[13px]" style={{ background: "var(--ok-bg)", color: "var(--ok-text)" }}>
+        <div
+          className="rounded-lg p-3 text-[13px]"
+          style={
+            submitted.ok
+              ? { background: "var(--ok-bg)", color: "var(--ok-text)" }
+              : { background: "var(--warn-bg)", color: "var(--warn-text)" }
+          }
+        >
           {submitted.message}
         </div>
       ) : (

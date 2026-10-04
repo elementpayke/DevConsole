@@ -9,4 +9,16 @@ describe("collect public URLs", () => {
     assert.equal(absoluteCollectUrl("/acme"), `${origin}/acme`);
     assert.equal(absoluteCollectUrl("acme/l/cart"), `${origin}/acme/l/cart`);
   });
+
+  it("treats empty NEXT_PUBLIC_COLLECT_ORIGIN as unset", () => {
+    const prev = process.env.NEXT_PUBLIC_COLLECT_ORIGIN;
+    process.env.NEXT_PUBLIC_COLLECT_ORIGIN = "   ";
+    try {
+      assert.equal(publicCollectOrigin(), "https://elementpay.net");
+      assert.equal(absoluteCollectUrl("/acme/l/cart"), "https://elementpay.net/acme/l/cart");
+    } finally {
+      if (prev === undefined) delete process.env.NEXT_PUBLIC_COLLECT_ORIGIN;
+      else process.env.NEXT_PUBLIC_COLLECT_ORIGIN = prev;
+    }
+  });
 });

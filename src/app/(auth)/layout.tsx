@@ -39,7 +39,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
 
       <div className="mx-auto flex w-full max-w-[1240px] flex-1 items-stretch gap-7 px-6 py-8 animate-fade-in">
         <div className="flex flex-1 flex-col items-center justify-center">
-          <div className="w-[480px] max-w-full rounded-xl border border-line bg-white px-[22px] py-[22px] shadow-[0_8px_30px_rgba(20,24,28,0.08)]">
+          <div className="force-light-surface w-[480px] max-w-full rounded-xl border border-line bg-white px-[22px] py-[22px] shadow-[0_8px_30px_rgba(20,24,28,0.08)]">
             {children}
           </div>
           <p className="mt-5 flex max-w-[480px] items-center justify-center gap-1.5 text-center text-xs text-faint">

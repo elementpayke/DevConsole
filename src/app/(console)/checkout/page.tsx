@@ -21,7 +21,8 @@ type TabId = (typeof TABS)[number]["id"];
 function CheckoutContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const tab = (searchParams.get("tab") as TabId) ?? "links";
+  const rawTab = searchParams.get("tab");
+  const tab: TabId = TABS.some((t) => t.id === rawTab) ? (rawTab as TabId) : "links";
 
   function setTab(next: TabId) {
     router.replace(`/checkout?tab=${next}`);

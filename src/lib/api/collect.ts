@@ -41,7 +41,9 @@ export type PaybillReference = {
 
 /** Apex vanity host for public collect URLs (override in env later if needed). */
 export function publicCollectOrigin(): string {
-  return (process.env.NEXT_PUBLIC_COLLECT_ORIGIN ?? "https://elementpay.net").replace(/\/$/, "");
+  const raw = process.env.NEXT_PUBLIC_COLLECT_ORIGIN?.trim();
+  const origin = raw || "https://elementpay.net";
+  return origin.replace(/\/$/, "");
 }
 
 export function absoluteCollectUrl(publicPath: string): string {

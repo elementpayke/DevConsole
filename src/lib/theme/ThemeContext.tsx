@@ -32,6 +32,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   // the inline script in layout.tsx already paints <html data-theme> before paint,
   // this just syncs React state to the real preference right after hydration.
   const [mode, setMode] = useState<ColorMode>("light");
+  const [ready, setReady] = useState(false);
 
   useEffect(() => {
     const stored = readStoredMode();
@@ -39,21 +40,23 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
       // Sync browser preference after hydration; SSR snapshot stays "light".
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setMode(stored);
-      applyMode(stored);
     }
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setReady(true);
   }, []);
 
+  useEffect(() => {
+    if (!ready) return;
+    applyMode(mode);
+    try {
+      window.localStorage.setItem(STORAGE_KEY, mode);
+    } catch {
+      // Keep the toggle usable even if persistence fails.
+    }
+  }, [mode, ready]);
+
   function toggleMode() {
-    setMode((prev) => {
-      const next: ColorMode = prev === "light" ? "dark" : "light";
-      try {
-        window.localStorage.setItem(STORAGE_KEY, next);
-      } catch {
-        // Keep the toggle usable even if persistence fails.
-      }
-      applyMode(next);
-      return next;
-    });
+    setMode((prev) => (prev === "light" ? "dark" : "light"));
   }
 
   return <ThemeContext.Provider value={{ mode, toggleMode }}>{children}</ThemeContext.Provider>;

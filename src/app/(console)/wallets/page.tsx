@@ -37,9 +37,14 @@ export default function WalletsPage() {
       });
 
     fetch("/api/merchant/payment-account/balance")
-      .then((r) => r.json())
+      .then((r) => {
+        if (!r.ok) throw new Error(`balance ${r.status}`);
+        return r.json();
+      })
       .then((json) => !cancelled && setBalance(json?.data ?? null))
-      .catch(() => {});
+      .catch(() => {
+        if (!cancelled) setBalance(null);
+      });
 
     listMyOrders({ order_type: "offramp" })
       .then((orders) => !cancelled && setMovements(orders.slice(0, 8)))
@@ -84,7 +89,7 @@ export default function WalletsPage() {
   const balanceLabel =
     balance?.balance_status === "ok" && balance.balance_usdc != null
       ? `$${balance.balance_usdc.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
-      : balance?.has_account
+      : wallet
         ? "—"
         : "No wallet linked";
 

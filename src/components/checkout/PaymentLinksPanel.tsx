@@ -59,12 +59,17 @@ export function PaymentLinksPanel({ onPreview: _onPreview }: { onPreview: () => 
 
   async function create() {
     if (!title.trim() || !amount.trim()) return;
+    const parsedAmount = Number(amount);
+    if (!Number.isFinite(parsedAmount) || parsedAmount <= 0) {
+      setError("Enter a valid amount greater than zero");
+      return;
+    }
     setBusy(true);
     setError(null);
     try {
       const row = await createPaymentLink({
         title: title.trim(),
-        amount: Number(amount),
+        amount: parsedAmount,
         kind,
       });
       setLinks((prev) => [row, ...prev]);
@@ -78,11 +83,16 @@ export function PaymentLinksPanel({ onPreview: _onPreview }: { onPreview: () => 
     }
   }
 
-  function copyLink(link: PaymentLink) {
+  async function copyLink(link: PaymentLink) {
     const url = absoluteCollectUrl(link.public_path);
-    navigator.clipboard?.writeText(url).catch(() => {});
-    setCopiedId(link.id);
-    window.setTimeout(() => setCopiedId((c) => (c === link.id ? null : c)), 2000);
+    if (!navigator.clipboard?.writeText) return;
+    try {
+      await navigator.clipboard.writeText(url);
+      setCopiedId(link.id);
+      window.setTimeout(() => setCopiedId((c) => (c === link.id ? null : c)), 2000);
+    } catch {
+      // Clipboard denied or unavailable — leave button label unchanged.
+    }
   }
 
   return (

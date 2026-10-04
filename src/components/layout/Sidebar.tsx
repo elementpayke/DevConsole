@@ -312,8 +312,8 @@ export function Sidebar() {
         />
       )}
       <aside
-        className={`fixed inset-y-0 left-0 z-[60] flex h-screen w-[260px] flex-shrink-0 flex-col transition-transform duration-200 md:sticky md:top-0 md:translate-x-0 ${
-          mobileOpen ? "translate-x-0" : "-translate-x-full"
+        className={`fixed inset-y-0 left-0 z-[60] flex h-screen w-[260px] flex-shrink-0 flex-col transition-transform duration-200 md:sticky md:top-0 md:translate-x-0 md:visible md:pointer-events-auto ${
+          mobileOpen ? "translate-x-0" : "-translate-x-full max-md:invisible max-md:pointer-events-none"
         } ${railOpen ? "md:w-[260px]" : "md:w-[76px]"}`}
         style={{
           background: "var(--rail)",

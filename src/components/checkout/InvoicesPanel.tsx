@@ -52,12 +52,17 @@ export function InvoicesPanel() {
 
   async function create() {
     if (!title.trim() || !amount.trim() || !email.trim()) return;
+    const parsedAmount = Number(amount);
+    if (!Number.isFinite(parsedAmount) || parsedAmount <= 0) {
+      setError("Enter a valid amount greater than zero");
+      return;
+    }
     setBusy(true);
     setError(null);
     try {
       const row = await createPaymentLink({
         title: title.trim(),
-        amount: Number(amount),
+        amount: parsedAmount,
         kind: "one_time",
         client_email: email.trim(),
       });
