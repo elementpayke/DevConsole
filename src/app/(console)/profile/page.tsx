@@ -14,6 +14,7 @@ import { colors } from "@/lib/theme";
 import { MerchantPaymentAccountCard } from "@/components/merchant/MerchantPaymentAccountCard";
 import { useMerchantExperience } from "@/lib/auth/useMerchantExperience";
 import { SettingsMethodsTab } from "@/components/settings/SettingsMethodsTab";
+import { SettingsMoneyTab } from "@/components/settings/SettingsMoneyTab";
 import { SettingsTeamTab } from "@/components/settings/SettingsTeamTab";
 import { SettingsAlertsTab } from "@/components/settings/SettingsAlertsTab";
 import { SettingsComplianceTab } from "@/components/settings/SettingsComplianceTab";
@@ -187,7 +188,10 @@ export default function ProfilePage() {
         {tab === "money" && (
           <div className="flex flex-col gap-5">
             {isMerchant ? (
-              <MerchantPaymentAccountCard />
+              <>
+                <MerchantPaymentAccountCard />
+                <SettingsMoneyTab />
+              </>
             ) : (
               <GlassCard className="p-[22px] text-[13px]" style={{ color: "var(--muted)" }}>
                 Payout routing applies to merchant accounts. Developer accounts settle via the API&apos;s

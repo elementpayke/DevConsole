@@ -6,6 +6,19 @@ export type ApiEnvelope<T> = {
 
 export type UserRole = "user" | "admin" | "internal" | "developer" | "merchant";
 
+export type PayoutMode = "local_currency" | "stablecoin";
+export type PayoutMethod = "mobile_money" | "bank";
+
+export type PayoutDestination = {
+  mode: PayoutMode;
+  currency?: string;
+  method?: PayoutMethod;
+  account_name?: string;
+  phone_number?: string;
+  account_number?: string;
+  bank_name?: string;
+};
+
 export type User = {
   id: number;
   email: string;
@@ -13,6 +26,7 @@ export type User = {
   is_active: boolean;
   kyc_verified: boolean;
   partner_customer_id?: string | null;
+  default_payout_json?: PayoutDestination | null;
   created_at: string;
   updated_at?: string | null;
 };
