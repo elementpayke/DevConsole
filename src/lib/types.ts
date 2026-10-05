@@ -17,6 +17,31 @@ export type User = {
   updated_at?: string | null;
 };
 
+export type PartnerCustomerStatus =
+  | "incomplete"
+  | "pending_review"
+  | "approved"
+  | "active"
+  | "rejected"
+  | "suspended";
+
+export type PartnerCustomer = {
+  id: string;
+  partner_customer_ref: string;
+  type: string;
+  status: PartnerCustomerStatus;
+  profile: Record<string, unknown>;
+  documents: Array<{ id: string; category: string }>;
+  products: { deposit_account: { status: string } };
+  created_at: string | null;
+  updated_at: string | null;
+  submitted_at: string | null;
+  /** Only present while status is "incomplete". */
+  missing?: string[];
+  /** Only present while status is "rejected". */
+  review_note?: string | null;
+};
+
 export type AuthTokens = {
   access_token: string;
   refresh_token: string;

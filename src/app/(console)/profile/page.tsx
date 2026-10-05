@@ -200,7 +200,7 @@ export default function ProfilePage() {
         {tab === "methods" && <SettingsMethodsTab />}
         {tab === "team" && <SettingsTeamTab />}
         {tab === "alerts" && <SettingsAlertsTab />}
-        {tab === "compliance" && <SettingsComplianceTab kycVerified={Boolean(user?.kyc_verified)} />}
+        {tab === "compliance" && <SettingsComplianceTab />}
         {tab === "activity" && <SettingsActivityTab />}
       </div>
     </>

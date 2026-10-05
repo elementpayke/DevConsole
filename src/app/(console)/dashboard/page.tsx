@@ -6,11 +6,14 @@ import { Header } from "@/components/layout/Header";
 import { MerchantWalletBanner } from "@/components/merchant/MerchantWalletBanner";
 import { useAuth } from "@/lib/auth/AuthContext";
 import { useMerchantExperience } from "@/lib/auth/useMerchantExperience";
+import { usePartnerCustomer } from "@/lib/auth/usePartnerCustomer";
+import { RequestLiveAccessModal } from "@/components/compliance/RequestLiveAccessModal";
+import { GoLiveModal } from "@/components/compliance/GoLiveModal";
 import { getDashboardStats } from "@/lib/api/dashboard";
 import { listMyOrders } from "@/lib/api/orders";
 import { ApiError } from "@/lib/api/client";
 import { statusStyle } from "@/lib/theme";
-import type { CurrencyStats, DashboardStats, Order } from "@/lib/types";
+import type { CurrencyStats, DashboardStats, Order, PartnerCustomerStatus } from "@/lib/types";
 
 /** Local-calendar day key (not UTC) so "today" matches the merchant's own clock. */
 function dayKey(date: Date) {
@@ -133,7 +136,7 @@ export default function DashboardPage() {
             {error}
           </p>
         ) : stats && isFresh ? (
-          <FreshOverview firstName={firstName} kycVerified={Boolean(user?.kyc_verified)} />
+          <FreshOverview firstName={firstName} />
         ) : stats ? (
           <FullOverview stats={stats} chart={chart} recent={recent} ordersFailed={ordersFailed} isMerchant={isMerchant} />
         ) : null}
@@ -142,7 +145,43 @@ export default function DashboardPage() {
   );
 }
 
-function FreshOverview({ firstName, kycVerified }: { firstName: string; kycVerified: boolean }) {
+const FRESH_STATUS_COPY: Record<
+  PartnerCustomerStatus,
+  { pill: string; intro: string }
+> = {
+  incomplete: {
+    pill: "Test mode · pretend money",
+    intro:
+      "You're in test mode with pretend money. Verify your business to unlock wallets, checkout and payouts.",
+  },
+  pending_review: {
+    pill: "Verification in review",
+    intro: "We're reviewing your business. Test mode stays open.",
+  },
+  approved: {
+    pill: "Verified · test mode",
+    intro: "You're verified. Go live whenever you're ready.",
+  },
+  active: {
+    pill: "Live",
+    intro: "You're verified. Wallets, checkout and payouts are unlocked.",
+  },
+  rejected: {
+    pill: "Needs changes",
+    intro: "Your verification request needs changes before it can be approved.",
+  },
+  suspended: {
+    pill: "Suspended",
+    intro: "Contact live@elementpay.net to resolve this.",
+  },
+};
+
+function FreshOverview({ firstName }: { firstName: string }) {
+  const { partnerCustomer, loading: partnerLoading, refresh } = usePartnerCustomer();
+  const [modal, setModal] = useState<"request" | "golive" | null>(null);
+  const status = partnerCustomer?.status ?? "incomplete";
+  const copy = FRESH_STATUS_COPY[status];
+
   const steps = [
     { title: "Create an API key", note: "Needed to accept your first payment.", href: "/api-keys", cta: "Create key" },
     { title: "Try a test payment", note: "Simulate checkout with pretend money.", href: "/reference", cta: "View API" },
@@ -161,13 +200,10 @@ function FreshOverview({ firstName, kycVerified }: { firstName: string; kycVerif
         />
         <span className="relative mb-2 inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11.5px] font-bold" style={{ background: "rgba(255,255,255,0.16)" }}>
           <span className="h-1.5 w-1.5 rounded-full" style={{ background: "#ffd166" }} />
-          Test mode · pretend money
+          {copy.pill}
         </span>
         <h1 className="relative m-0 text-[28px] leading-tight font-extrabold">Welcome, {firstName}</h1>
-        <p className="relative mt-1 max-w-[52ch] text-sm opacity-90">
-          You&apos;re set up in test mode. Create a key, send yourself a test payment, then verify your
-          business when you&apos;re ready to accept real money.
-        </p>
+        <p className="relative mt-1 max-w-[52ch] text-sm opacity-90">{copy.intro}</p>
       </section>
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-[1.4fr_1fr]">
@@ -198,22 +234,47 @@ function FreshOverview({ firstName, kycVerified }: { firstName: string; kycVerif
 
         <section className="flex flex-col gap-3 rounded-xl p-[18px]" style={{ background: "var(--panel)", border: "1px solid var(--border)" }}>
           <div className="text-[15px] font-bold">Ready for real money?</div>
-          <p className="text-[13px]" style={{ color: "var(--muted)" }}>
-            {kycVerified
-              ? "Your business is verified — live payments are enabled."
-              : "Verify your business to start accepting real payments. Test mode stays open meanwhile."}
-          </p>
-          {!kycVerified && (
+          <p className="text-[13px]" style={{ color: "var(--muted)" }}>{copy.intro}</p>
+          {!partnerLoading && !partnerCustomer && (
             <Link
-              href="/profile"
+              href="/onboarding"
               className="self-start rounded-lg px-3.5 py-2.5 text-[13px] font-semibold no-underline"
               style={{ border: "1px solid var(--border-strong)", background: "var(--panel)", color: "var(--ink)" }}
             >
-              Start verification
+              Add business details
             </Link>
+          )}
+          {!partnerLoading && partnerCustomer && status === "incomplete" && (
+            <button
+              type="button"
+              onClick={() => setModal("request")}
+              className="self-start rounded-lg px-3.5 py-2.5 text-[13px] font-semibold"
+              style={{ border: "1px solid var(--border-strong)", background: "var(--panel)", color: "var(--ink)" }}
+            >
+              Start verification
+            </button>
+          )}
+          {!partnerLoading && status === "approved" && (
+            <button
+              type="button"
+              onClick={() => setModal("golive")}
+              className="self-start rounded-lg px-3.5 py-2.5 text-[13px] font-semibold"
+              style={{ border: "1px solid var(--border-strong)", background: "var(--indigo)", color: "var(--on-indigo)" }}
+            >
+              Go live
+            </button>
           )}
         </section>
       </div>
+
+      {modal === "request" && partnerCustomer && (
+        <RequestLiveAccessModal
+          partnerCustomer={partnerCustomer}
+          onClose={() => setModal(null)}
+          onSubmitted={refresh}
+        />
+      )}
+      {modal === "golive" && <GoLiveModal onClose={() => setModal(null)} />}
     </div>
   );
 }
