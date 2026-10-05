@@ -35,6 +35,21 @@ Open [http://localhost:3000](http://localhost:3000).
 | `NEXT_PUBLIC_LIVE_CONSOLE_URL` | Yes | Live console origin; sandbox shows “Log in to Live” |
 | `NEXT_PUBLIC_SANDBOX_CONSOLE_URL` | Yes | Sandbox console origin; live shows “Log in to Sandbox” |
 | `NEXT_PUBLIC_TURNSTILE_SITE_KEY` | Yes | Cloudflare Turnstile site key; widget omitted when empty |
+| `GITHUB_CLIENT_ID` / `GITHUB_CLIENT_SECRET` | **No** (server only) | "Continue with GitHub"; button route 503s when unset |
+| `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | **No** (server only) | "Continue with Google"; button route 503s when unset |
+
+### Social login (GitHub / Google)
+
+Authorization-code flow, terminated entirely in this app — the aggregator
+never holds a provider client secret or talks to GitHub/Google directly.
+`/api/auth/oauth/<provider>/start` redirects to the provider with a signed
+CSRF `state` cookie; `/api/auth/oauth/<provider>/callback` exchanges the
+code, fetches the verified profile, then calls the aggregator's
+`POST /auth/oauth/callback` (under the same `X-FE-Client-Secret` trust as
+`/auth/login`) to find-or-create the user and mint the usual session cookies.
+
+To enable a provider, register an OAuth app and set its client id/secret
+above — see `.env.example` for the exact console links and callback URLs.
 
 ### Cloudflare Turnstile
 
