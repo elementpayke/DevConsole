@@ -8,6 +8,7 @@ import { PaymentLinksPanel } from "@/components/checkout/PaymentLinksPanel";
 import { InvoicesPanel } from "@/components/checkout/InvoicesPanel";
 import { EmbedPanel } from "@/components/checkout/EmbedPanel";
 import { ApiModePanel } from "@/components/checkout/ApiModePanel";
+import { VerificationBanner } from "@/components/compliance/VerificationBanner";
 
 const TABS = [
   { id: "links", label: "Payment links" },
@@ -32,6 +33,7 @@ function CheckoutContent() {
     <>
       <Header title="Checkout" />
       <div className="flex flex-col gap-4 p-5 md:p-7">
+        <VerificationBanner surface="checkout" />
         <Link
           href="/paybill"
           className="order-last flex flex-wrap items-center gap-3.5 rounded-xl p-4 no-underline md:order-first"
@@ -106,7 +108,7 @@ function CheckoutContent() {
         </div>
 
         <div className="max-w-[920px]">
-          {tab === "links" && <PaymentLinksPanel onPreview={() => undefined} />}
+          {tab === "links" && <PaymentLinksPanel />}
           {tab === "invoices" && <InvoicesPanel />}
           {tab === "embed" && <EmbedPanel />}
           {tab === "api" && <ApiModePanel />}
