@@ -5,13 +5,20 @@
       "name": "devconsole",
       "runtimeExecutable": "npm",
       "runtimeArgs": ["run", "dev"],
-      "port": 3000
+      "port": 3000,
+      "autoPort": true
     },
     {
       "name": "aggregator",
       "runtimeExecutable": "bash",
       "runtimeArgs": ["-c", "cd /home/joe/kazi/company/ELEMENTPAY/element-pay-aggregator && source aggregator_env/bin/activate && uvicorn app.main:app --host 0.0.0.0 --port 8000"],
       "port": 8000
+    },
+    {
+      "name": "design-export",
+      "runtimeExecutable": "bash",
+      "runtimeArgs": ["-c", "cd /tmp/devconsole-redesign && python3 -m http.server 8731"],
+      "port": 8731
     }
   ]
 }

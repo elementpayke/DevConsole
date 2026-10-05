@@ -126,17 +126,14 @@ export function CheckoutSimPanel() {
   return (
     <aside
       className="relative hidden min-h-[560px] flex-col gap-6 overflow-hidden rounded-[22px] p-7 lg:flex"
-      style={{ border: "1px solid rgba(67,57,202,0.14)" }}
+      style={{ border: "1px solid var(--border)", background: "var(--bg)" }}
     >
-      <span
-        className="pointer-events-none absolute inset-0"
-        style={{ backgroundImage: "radial-gradient(rgba(67,57,202,0.10) 1px, transparent 1px)", backgroundSize: "18px 18px" }}
-      />
+      <span className="pointer-events-none absolute inset-0" style={{ backgroundImage: "none" }} />
       <div className="relative flex flex-col gap-2">
         <span className="text-[11.5px] font-semibold text-primary">What your customers see</span>
         <h2
           key={rail.id}
-          className="m-0 max-w-[26ch] text-[26px] leading-tight font-bold tracking-tight text-ink animate-fade-in"
+          className="font-heading m-0 max-w-[26ch] text-[26px] leading-tight font-bold tracking-tight text-ink animate-fade-in"
           style={{ minHeight: "2.4em" }}
         >
           {rail.headline}
@@ -145,8 +142,8 @@ export function CheckoutSimPanel() {
 
       <div className="relative flex flex-1 items-center justify-center">
         <div
-          className="force-light-surface w-full max-w-[320px] overflow-hidden rounded-[18px] border border-line bg-white"
-          style={{ boxShadow: "0 24px 50px -24px rgba(67,57,202,0.35)" }}
+          className="force-light-surface w-full max-w-[320px] overflow-hidden rounded-[var(--radius-md)] border border-line bg-[var(--panel-solid)]"
+          style={{ boxShadow: "none" }}
         >
           <div className="flex items-center gap-1.5 border-b border-[#eceef0] bg-[#f6f7f8] px-3.5 py-2.5">
             <span className="h-2.5 w-2.5 rounded-full border border-[#8b9199]" />
@@ -154,7 +151,7 @@ export function CheckoutSimPanel() {
           </div>
           <div className="flex flex-col gap-3.5 p-4" style={{ minHeight: 318 }}>
             <span className="flex items-center gap-2.5">
-              <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary text-[11px] font-bold text-white">
+              <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary text-[11px] font-bold text-[color:var(--on-indigo)]">
                 AC
               </span>
               <span className="text-[12.5px] font-bold">Acme Commerce</span>
@@ -174,8 +171,8 @@ export function CheckoutSimPanel() {
                       key={r.id}
                       className="flex items-center gap-2.5 rounded-[10px] border px-3 py-2.5 transition-colors duration-300"
                       style={{
-                        borderColor: isSelected ? "#4339ca" : "#e7e9ec",
-                        background: isSelected ? "#f0effc" : "transparent",
+                        borderColor: isSelected ? "var(--indigo)" : "#e7e9ec",
+                        background: isSelected ? "var(--indigo-tint)" : "transparent",
                       }}
                     >
                       <RailMark id={r.id} />
@@ -184,7 +181,7 @@ export function CheckoutSimPanel() {
                         <span className="text-[10.5px] text-[#6b727a]">{r.note}</span>
                       </span>
                       {isSelected && (
-                        <span className="animate-fade-in ml-auto flex h-4 w-4 items-center justify-center rounded-full bg-[#4339ca] text-[9px] font-bold text-white">
+                        <span className="animate-fade-in ml-auto flex h-4 w-4 items-center justify-center rounded-full bg-[var(--indigo)] text-[9px] font-bold text-[color:var(--on-indigo)]">
                           ✓
                         </span>
                       )}
@@ -192,8 +189,8 @@ export function CheckoutSimPanel() {
                   );
                 })}
                 <span
-                  className="mt-1.5 rounded-[10px] py-3 text-center text-[13px] font-bold text-white transition-opacity duration-300"
-                  style={{ background: "#4339ca", opacity: selected ? 1 : 0.5 }}
+                  className="mt-1.5 rounded-[10px] py-3 text-center text-[13px] font-bold text-[color:var(--on-indigo)] transition-opacity duration-300"
+                  style={{ background: "var(--indigo)", opacity: selected ? 1 : 0.5 }}
                 >
                   Pay KES 5,000
                 </span>
@@ -202,8 +199,8 @@ export function CheckoutSimPanel() {
 
             {phase === "processing" && rail.id === "mpesa" && (
               <div key="processing-mpesa" className="flex flex-1 animate-fade-in flex-col items-center justify-center gap-3 py-2 text-center">
-                <span className="flex h-[54px] w-[54px] items-center justify-center rounded-2xl bg-[#f0effc]">
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#4339ca" strokeWidth={2} strokeLinecap="round">
+                <span className="flex h-[54px] w-[54px] items-center justify-center rounded-2xl bg-[var(--indigo-tint)]">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--indigo)" strokeWidth={2} strokeLinecap="round">
                     <rect x="6" y="2" width="12" height="20" rx="2.5" />
                     <path d="M11 18h2" />
                   </svg>
@@ -215,7 +212,7 @@ export function CheckoutSimPanel() {
                     <span
                       key={i}
                       className="h-2.5 w-2.5 rounded-full transition-colors duration-200"
-                      style={{ background: i < pinFilled ? "#4339ca" : "#e7e9ec" }}
+                      style={{ background: i < pinFilled ? "var(--indigo)" : "#e7e9ec" }}
                     />
                   ))}
                 </span>
@@ -225,8 +222,8 @@ export function CheckoutSimPanel() {
             {phase === "processing" && rail.id === "card" && (
               <div key="processing-card" className="flex flex-1 animate-fade-in flex-col items-center justify-center gap-3 py-2">
                 <div
-                  className="flex w-full flex-col gap-3 rounded-xl p-3.5 text-white"
-                  style={{ background: "linear-gradient(135deg, #4339ca, #2a2385)" }}
+                  className="flex w-full flex-col gap-3 rounded-xl p-3.5 text-[color:var(--on-indigo)]"
+                  style={{ background: "linear-gradient(135deg, var(--indigo), var(--indigo-text))" }}
                 >
                   <span className="flex items-center justify-between">
                     <span className="h-5 w-7 rounded-[3px]" style={{ background: "rgba(255,255,255,0.35)" }} />
@@ -243,7 +240,7 @@ export function CheckoutSimPanel() {
                 <span className="flex items-center gap-2 text-[12px] text-[#5e656d]">
                   <span
                     className="h-3.5 w-3.5 flex-shrink-0 rounded-full border-2 animate-spin-slow"
-                    style={{ borderColor: "#e7e9ec", borderTopColor: "#4339ca" }}
+                    style={{ borderColor: "#e7e9ec", borderTopColor: "var(--indigo)" }}
                   />
                   Processing payment…
                 </span>
@@ -252,8 +249,8 @@ export function CheckoutSimPanel() {
 
             {phase === "processing" && rail.id === "crypto" && (
               <div key="processing-crypto" className="flex flex-1 animate-fade-in flex-col items-center justify-center gap-3 py-2 text-center">
-                <span className="relative flex h-[64px] w-[64px] items-center justify-center rounded-2xl bg-[#f0effc]">
-                  <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#4339ca" strokeWidth={1.8}>
+                <span className="relative flex h-[64px] w-[64px] items-center justify-center rounded-2xl bg-[var(--indigo-tint)]">
+                  <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="var(--indigo)" strokeWidth={1.8}>
                     <rect x="3" y="3" width="7" height="7" rx="1" />
                     <rect x="14" y="3" width="7" height="7" rx="1" />
                     <rect x="3" y="14" width="7" height="7" rx="1" />
@@ -261,7 +258,7 @@ export function CheckoutSimPanel() {
                   </svg>
                   <span
                     className="absolute inset-0 rounded-2xl border-2 animate-spin-slow"
-                    style={{ borderColor: "transparent", borderTopColor: "#4339ca" }}
+                    style={{ borderColor: "transparent", borderTopColor: "var(--indigo)" }}
                   />
                 </span>
                 <span className="text-[14px] font-bold">Waiting for wallet</span>
@@ -272,7 +269,7 @@ export function CheckoutSimPanel() {
             {phase === "done" && (
               <div key={`done-${rail.id}`} className="flex flex-1 animate-fade-in flex-col items-center justify-center gap-2.5 py-2 text-center">
                 <span
-                  className="flex h-11 w-11 items-center justify-center rounded-full text-[18px] font-bold text-white"
+                  className="flex h-11 w-11 items-center justify-center rounded-full text-[18px] font-bold text-[color:var(--on-indigo)]"
                   style={{ background: "oklch(0.6 0.16 152)" }}
                 >
                   ✓
@@ -309,7 +306,7 @@ export function CheckoutSimPanel() {
 function RailMark({ id }: { id: RailId }) {
   if (id === "crypto") {
     return (
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4339ca" strokeWidth={2} className="flex-shrink-0">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--indigo)" strokeWidth={2} className="flex-shrink-0">
         <rect x="3" y="3" width="7" height="7" rx="1" />
         <rect x="14" y="3" width="7" height="7" rx="1" />
         <rect x="3" y="14" width="7" height="7" rx="1" />
@@ -319,11 +316,11 @@ function RailMark({ id }: { id: RailId }) {
   }
   if (id === "card") {
     return (
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4339ca" strokeWidth={2} className="flex-shrink-0">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--indigo)" strokeWidth={2} className="flex-shrink-0">
         <rect x="2" y="5" width="20" height="14" rx="2" />
         <path d="M2 10h20" />
       </svg>
     );
   }
-  return <span className="h-2 w-2 flex-shrink-0 rounded-full bg-[#4339ca]" />;
+  return <span className="h-2 w-2 flex-shrink-0 rounded-full bg-[var(--indigo)]" />;
 }

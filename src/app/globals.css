@@ -1,103 +1,178 @@
 @import "tailwindcss";
 
+/*
+ * ElementPay Console branding — Merchant V2 tokens: indigo accent #4339ca
+ * on a paper/lavender ground, Manrope for heading + body, JetBrains Mono
+ * for code/mono. Supersedes the Industry steel/Barlow system.
+ */
+
 :root {
   color-scheme: light;
-  --ink: oklch(0.19 0.02 264);
-  --muted: oklch(0.48 0.015 264);
-  --subtle: oklch(0.5 0.012 264);
-  --faint: oklch(0.55 0.012 264);
-  --line: oklch(0.91 0.006 264);
-  --line-soft: oklch(0.95 0.004 264);
-  --line-strong: oklch(0.88 0.006 264);
-  --surface: oklch(0.96 0.006 264);
-  --surface-soft: oklch(0.975 0.002 264);
+  --bg: #f0effc;
+  --bg-blur: rgba(240, 239, 252, 0.86);
   --panel: #ffffff;
   --panel-solid: #ffffff;
-  --border: oklch(0.91 0.006 264);
-  --border-strong: oklch(0.86 0.006 264);
-  --primary: #4339ca;
-  --primary-hover: #362ea3;
-  --primary-tint: #f0effc;
+  --ink: #1d1f20;
+  --muted: #55585c;
+  --subtle: #55585c;
+  --faint: #7a7d81;
+  --border: rgba(29, 31, 32, 0.12);
+  --border-strong: rgba(29, 31, 32, 0.2);
+  --line: rgba(29, 31, 32, 0.09);
+  --line-soft: rgba(29, 31, 32, 0.05);
+  --line-strong: rgba(29, 31, 32, 0.2);
+  --surface: #f6f5fd;
+  --surface-soft: #faf9ff;
+  --glass-line: transparent;
+  --glass-shadow: 0 1px 2px rgba(29, 22, 90, 0.04);
+  --glass-blur: none;
+  --ambient: radial-gradient(rgba(67, 57, 202, 0.08) 1px, transparent 1px);
+  --code-bg: #f6f5fd;
+  --code-text: #3a30b8;
+  --code-line: rgba(29, 31, 32, 0.09);
   --indigo: #4339ca;
   --indigo-text: #3a30b8;
   --indigo-tint: #f0effc;
   --indigo-soft: #b7b2ef;
   --on-indigo: #ffffff;
+  --primary: #4339ca;
+  --primary-hover: #3a30b8;
+  --primary-tint: #f0effc;
   --ok-bg: oklch(0.945 0.018 160);
   --ok-text: oklch(0.42 0.06 160);
   --warn-bg: oklch(0.955 0.022 80);
   --warn-text: oklch(0.47 0.06 75);
   --bad-bg: oklch(0.955 0.018 25);
   --bad-text: oklch(0.48 0.08 25);
-  --code-bg: oklch(0.965 0.003 264);
-  --code-text: oklch(0.3 0.018 264);
-  --code-line: oklch(0.91 0.004 264);
-  --rail: #ffffff;
-  --rail-line: oklch(0.91 0.004 264);
-  --rail-text: oklch(0.19 0.012 264);
-  --rail-muted: oklch(0.45 0.009 264);
-  --rail-dim: oklch(0.56 0.007 264);
-  --env-band: repeating-linear-gradient(135deg, rgba(67, 57, 202, 0.14) 0 10px, rgba(67, 57, 202, 0.04) 10px 20px);
+  --sand-bg: #f0effc;
+  --sand-text: #3a30b8;
+  --rail: rgba(255, 255, 255, 0.72);
+  --rail-line: rgba(67, 57, 202, 0.12);
+  --rail-text: #1d1f20;
+  --rail-muted: #55585c;
+  --rail-dim: #7a7d81;
+  --hero-ground: #faf9ff;
+  --hero-text: #1d1f20;
+  --hero-muted: #55585c;
+  --hero-dim: #7a7d81;
+  --hero-glass: #ffffff;
+  --hero-line: rgba(29, 31, 32, 0.12);
+  --hero-fill: #ffffff;
+  --hero-fill-strong: #ffffff;
+  --hero-edge: rgba(29, 31, 32, 0.12);
+  --hero-edge-strong: rgba(29, 31, 32, 0.12);
+  --hero-cast: transparent;
+  --hero-cast-lg: transparent;
+  --hero-shade: transparent;
+  --hero-code-bg: #f6f5fd;
+  --hero-wash: transparent;
+  --field: #4339ca;
+  --on-field: #ffffff;
+  --on-field-dim: #b7b2ef;
+  --color-text: #1d1f20;
+  --color-divider: rgba(29, 31, 32, 0.2);
+  --env-band: repeating-linear-gradient(
+    135deg,
+    rgba(67, 57, 202, 0.14) 0 10px,
+    rgba(67, 57, 202, 0.04) 10px 20px
+  );
+  --font-heading: var(--font-manrope), "Manrope", system-ui, sans-serif;
+  --font-body: var(--font-manrope), "Manrope", system-ui, sans-serif;
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
 }
 
 [data-theme="dark"] {
   color-scheme: dark;
-  --ink: oklch(0.96 0.003 264);
-  --muted: oklch(0.74 0.007 264);
-  --subtle: oklch(0.68 0.007 264);
-  --faint: oklch(0.62 0.007 264);
-  --line: oklch(0.26 0.008 264);
-  --line-soft: oklch(0.24 0.008 264);
-  --line-strong: oklch(0.34 0.010 264);
-  --surface: oklch(0.24 0.010 264);
-  --surface-soft: oklch(0.19 0.009 264);
-  --panel: oklch(0.205 0.010 264);
-  --panel-solid: oklch(0.205 0.010 264);
-  --border: oklch(0.29 0.009 264);
-  --border-strong: oklch(0.34 0.010 264);
-  --primary: #7068f0;
-  --primary-hover: #8d86f4;
-  --primary-tint: rgba(112, 104, 240, 0.16);
+  --bg: oklch(0.165 0.008 250);
+  --bg-blur: oklch(0.165 0.008 250 / 0.85);
+  --panel: oklch(0.205 0.01 250);
+  --panel-solid: oklch(0.205 0.01 250);
+  --ink: oklch(0.96 0.003 250);
+  --muted: oklch(0.74 0.007 250);
+  --subtle: oklch(0.74 0.007 250);
+  --faint: oklch(0.62 0.007 250);
+  --border: oklch(0.29 0.009 250);
+  --border-strong: oklch(0.34 0.01 250);
+  --line: oklch(0.26 0.008 250);
+  --line-soft: oklch(0.22 0.008 250);
+  --line-strong: oklch(0.34 0.01 250);
+  --surface: oklch(0.24 0.01 250);
+  --surface-soft: oklch(0.19 0.009 250);
+  --glass-line: transparent;
+  --glass-shadow: none;
+  --glass-blur: none;
+  --ambient: none;
+  --code-bg: oklch(0.185 0.009 250);
+  --code-text: oklch(0.88 0.018 250);
+  --code-line: oklch(0.29 0.009 250);
   --indigo: #7068f0;
   --indigo-text: #a9a3f7;
   --indigo-tint: rgba(112, 104, 240, 0.16);
   --indigo-soft: #3c368f;
   --on-indigo: #ffffff;
+  --primary: #7068f0;
+  --primary-hover: #a9a3f7;
+  --primary-tint: rgba(112, 104, 240, 0.16);
   --ok-bg: oklch(0.3 0.025 160);
   --ok-text: oklch(0.82 0.05 160);
   --warn-bg: oklch(0.32 0.025 80);
   --warn-text: oklch(0.84 0.05 80);
   --bad-bg: oklch(0.32 0.03 25);
   --bad-text: oklch(0.82 0.05 25);
-  --code-bg: oklch(0.185 0.009 264);
-  --code-text: oklch(0.88 0.018 264);
-  --code-line: oklch(0.29 0.009 264);
-  --rail: oklch(0.185 0.009 264);
-  --rail-line: oklch(0.29 0.009 264);
-  --rail-text: oklch(0.96 0.003 264);
-  --rail-muted: oklch(0.74 0.007 264);
-  --rail-dim: oklch(0.62 0.007 264);
-  --env-band: repeating-linear-gradient(135deg, rgba(112, 104, 240, 0.28) 0 10px, rgba(112, 104, 240, 0.08) 10px 20px);
+  --sand-bg: rgba(112, 104, 240, 0.16);
+  --sand-text: #c9c5fa;
+  --rail: oklch(0.185 0.009 250);
+  --rail-line: oklch(0.29 0.009 250);
+  --rail-text: oklch(0.96 0.003 250);
+  --rail-muted: oklch(0.74 0.007 250);
+  --rail-dim: oklch(0.62 0.007 250);
+  --hero-ground: oklch(0.165 0.008 250);
+  --hero-text: oklch(0.96 0.003 250);
+  --hero-muted: oklch(0.74 0.007 250);
+  --hero-dim: oklch(0.62 0.007 250);
+  --hero-glass: oklch(0.205 0.01 250);
+  --hero-line: oklch(0.29 0.009 250);
+  --hero-fill: oklch(0.205 0.01 250);
+  --hero-fill-strong: oklch(0.205 0.01 250);
+  --hero-edge: oklch(0.29 0.009 250);
+  --hero-edge-strong: oklch(0.29 0.009 250);
+  --hero-cast: transparent;
+  --hero-cast-lg: transparent;
+  --hero-shade: transparent;
+  --hero-code-bg: oklch(0.24 0.01 250);
+  --hero-wash: transparent;
+  --field: #7068f0;
+  --on-field: #ffffff;
+  --on-field-dim: #3c368f;
+  --color-text: oklch(0.96 0.003 250);
+  --color-divider: oklch(0.34 0.01 250);
+  --env-band: repeating-linear-gradient(
+    135deg,
+    rgba(112, 104, 240, 0.28) 0 10px,
+    rgba(112, 104, 240, 0.08) 10px 20px
+  );
 }
 
-/* Fixed-white surfaces (auth card, checkout preview) keep light tokens in dark mode. */
+/* Fixed-light surfaces (auth card, checkout preview) keep the Merchant V2 light ramp. */
 .force-light-surface {
   color-scheme: light;
-  --ink: oklch(0.19 0.02 264);
-  --muted: oklch(0.48 0.015 264);
-  --subtle: oklch(0.5 0.012 264);
-  --faint: oklch(0.55 0.012 264);
-  --line: oklch(0.91 0.006 264);
-  --line-soft: oklch(0.95 0.004 264);
-  --line-strong: oklch(0.88 0.006 264);
-  --surface: oklch(0.96 0.006 264);
-  --surface-soft: oklch(0.975 0.002 264);
+  --ink: #1d1f20;
+  --muted: #55585c;
+  --subtle: #55585c;
+  --faint: #7a7d81;
+  --line: rgba(29, 31, 32, 0.09);
+  --line-soft: rgba(29, 31, 32, 0.05);
+  --line-strong: rgba(29, 31, 32, 0.2);
+  --surface: #f6f5fd;
+  --surface-soft: #faf9ff;
   --panel: #ffffff;
   --panel-solid: #ffffff;
-  --border: oklch(0.91 0.006 264);
-  --border-strong: oklch(0.86 0.006 264);
+  --border: rgba(29, 31, 32, 0.12);
+  --border-strong: rgba(29, 31, 32, 0.2);
   --primary: #4339ca;
-  --primary-hover: #362ea3;
+  --primary-hover: #3a30b8;
   --primary-tint: #f0effc;
   --indigo: #4339ca;
   --indigo-text: #3a30b8;
@@ -122,7 +197,7 @@
   --color-line-strong: var(--line-strong);
   --color-surface: var(--surface);
   --color-surface-soft: var(--surface-soft);
-  --color-panel: var(--panel);
+  --color-panel: var(--panel-solid);
   --color-border: var(--border);
   --color-border-strong: var(--border-strong);
   --color-primary: var(--primary);
@@ -163,23 +238,23 @@
 
 body {
   margin: 0;
-  font-family: var(--font-manrope), sans-serif;
-  background:
-    radial-gradient(circle at 8% 8%, oklch(0.9 0.05 276 / 0.5) 0%, transparent 38%),
-    radial-gradient(circle at 92% 15%, oklch(0.88 0.07 200 / 0.4) 0%, transparent 42%),
-    radial-gradient(circle at 30% 90%, oklch(0.9 0.06 340 / 0.35) 0%, transparent 45%),
-    var(--surface);
+  -webkit-font-smoothing: antialiased;
+  font-family: var(--font-body);
+  font-size: 14px;
+  background: var(--bg);
+  background-image: var(--ambient);
   background-attachment: fixed;
   min-height: 100vh;
   color: var(--ink);
 }
 
-[data-theme="dark"] body {
-  background:
-    radial-gradient(circle at 8% 8%, oklch(0.3 0.05 276 / 0.35) 0%, transparent 38%),
-    radial-gradient(circle at 92% 15%, oklch(0.28 0.07 200 / 0.3) 0%, transparent 42%),
-    radial-gradient(circle at 30% 90%, oklch(0.3 0.06 340 / 0.25) 0%, transparent 45%),
-    var(--surface);
+h1,
+h2,
+h3,
+h4 {
+  font-family: var(--font-heading);
+  font-weight: 700;
+  letter-spacing: -0.01em;
 }
 
 a {
@@ -190,46 +265,56 @@ a:hover {
   color: var(--primary-hover);
 }
 
+:focus {
+  outline: none;
+}
+
+:focus-visible {
+  outline: 2px solid var(--indigo);
+  outline-offset: 2px;
+}
+
+::selection {
+  background: color-mix(in srgb, var(--indigo) 30%, transparent);
+}
+
 .glass-card {
-  background: oklch(1 0 0 / 0.5);
-  backdrop-filter: blur(16px) saturate(160%);
-  -webkit-backdrop-filter: blur(16px) saturate(160%);
-  border: 1px solid oklch(1 0 0 / 0.5);
-  box-shadow: 0 4px 20px oklch(0.2 0.02 264 / 0.06);
-  border-radius: 11px;
+  background: var(--panel-solid);
+  border: 1px solid var(--border);
+  box-shadow: var(--glass-shadow);
+  border-radius: var(--radius-md);
 }
 
 .glass-panel {
-  background: oklch(1 0 0 / 0.55);
-  backdrop-filter: blur(20px) saturate(160%);
-  -webkit-backdrop-filter: blur(20px) saturate(160%);
+  background: var(--panel-solid);
 }
 
-/* Near-opaque, unlike .glass-card — for surfaces over a dark/dimmed backdrop
-   (auth screen, modals, drawers), where dark --ink/--muted text needs a
-   solidly light card underneath it to read, not a 50%-translucent one. */
 .solid-card {
-  background: oklch(1 0 0 / 0.94);
-  backdrop-filter: blur(24px) saturate(160%);
-  -webkit-backdrop-filter: blur(24px) saturate(160%);
-  border: 1px solid oklch(1 0 0 / 0.6);
+  background: var(--panel-solid);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
 }
 
 [data-theme="dark"] .glass-card {
-  background: oklch(0.22 0.01 264 / 0.6);
-  border-color: oklch(1 0 0 / 0.08);
-  box-shadow: 0 4px 20px oklch(0 0 0 / 0.25);
+  background: var(--panel-solid);
+  border-color: var(--border);
+  box-shadow: none;
 }
 
 [data-theme="dark"] .glass-panel {
-  background: oklch(0.2 0.01 264 / 0.65);
+  background: var(--panel-solid);
 }
 
 [data-theme="dark"] .solid-card {
-  background: oklch(0.22 0.01 264 / 0.96);
-  border-color: oklch(1 0 0 / 0.08);
+  background: var(--panel-solid);
+  border-color: var(--border);
 }
 
 .mono {
-  font-family: var(--font-jetbrains-mono), monospace;
+  font-family: var(--font-jetbrains-mono), "JetBrains Mono", ui-monospace, monospace;
+}
+
+.font-heading {
+  font-family: var(--font-heading);
+  letter-spacing: -0.01em;
 }

@@ -26,12 +26,12 @@ export function InvoiceDocModal({ invoice, onClose }: { invoice: Invoice; onClos
 
       <article
         className="flex flex-col gap-6 rounded-xl p-6 text-[13px]"
-        style={{ background: "#fff", color: "#16162a", border: "1px solid rgba(20,24,28,0.08)" }}
+        style={{ background: "var(--panel-solid)", color: "var(--ink)", border: "1px solid var(--border)" }}
       >
         <div className="flex items-start gap-4">
           <span
             className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg text-[14px] font-bold"
-            style={{ background: "#4339ca", color: "#fff" }}
+            style={{ background: "var(--indigo)", color: "var(--on-indigo)" }}
           >
             EP
           </span>
@@ -76,14 +76,14 @@ export function InvoiceDocModal({ invoice, onClose }: { invoice: Invoice; onClos
           </div>
         </div>
 
-        <div className="flex items-center gap-3.5 rounded-lg p-4" style={{ background: "#f0effc" }}>
+        <div className="flex items-center gap-3.5 rounded-lg p-4" style={{ background: "var(--indigo-tint)" }}>
           <span className="flex flex-col gap-0.5">
             <span className="font-bold">Pay this invoice</span>
             <span className="text-[12px]" style={{ color: "#5b5b72" }}>M-Pesa, mobile money, card, bank or stablecoins</span>
           </span>
           <span
             className="ml-auto rounded-lg px-4 py-2.5 text-[13px] font-bold"
-            style={{ background: "#4339ca", color: "#fff" }}
+            style={{ background: "var(--indigo)", color: "var(--on-indigo)" }}
           >
             Pay {invoice.currency} {invoice.amount.toLocaleString()}
           </span>

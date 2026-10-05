@@ -11,16 +11,16 @@ export function PosterModal({ account, onClose }: { account: string; onClose: ()
       </div>
       <div
         className="mx-auto flex max-w-[320px] flex-col overflow-hidden rounded-2xl"
-        style={{ background: "#fff", color: "#1b1650", border: "1px solid #dcdaf7" }}
+        style={{ background: "var(--panel-solid)", color: "var(--ink)", border: "1px solid var(--border)" }}
       >
-        <div className="flex flex-col items-center gap-0.5 px-5 py-4 text-center" style={{ background: "#4339ca", color: "#fff" }}>
+        <div className="flex flex-col items-center gap-0.5 px-5 py-4 text-center" style={{ background: "var(--indigo)", color: "var(--on-indigo)" }}>
           <span className="text-[13px] font-extrabold tracking-[0.16em]">SCAN OR PAYBILL</span>
           <span className="text-[26px] font-extrabold">Pay with M-Pesa</span>
         </div>
         <div className="flex flex-col items-center gap-3 px-5 py-5 text-center">
           <span className="flex flex-col items-center gap-1.5">
             <span className="text-[11px] font-extrabold tracking-[0.12em]" style={{ color: "#5b5790" }}>ACCOUNT NUMBER</span>
-            <span className="mono rounded-lg px-4 py-2 text-[22px] font-bold tracking-wide" style={{ background: "#f0effc" }}>{account}</span>
+            <span className="mono rounded-lg px-4 py-2 text-[22px] font-bold tracking-wide" style={{ background: "var(--indigo-tint)" }}>{account}</span>
           </span>
           <span className="text-[10.5px]" style={{ color: "#8a87b0" }}>Powered by ElementPay</span>
         </div>
