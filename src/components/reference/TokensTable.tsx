@@ -8,7 +8,7 @@ export function TokensTable({ tokens }: { tokens: TokenMeta[] }) {
     <GlassCard className="mb-6 overflow-hidden">
       <table className="w-full border-collapse">
         <thead>
-          <tr style={{ background: "oklch(0.98 0.003 264)" }}>
+          <tr style={{ background: "var(--surface-soft)" }}>
             {["Token", "Network", "Chain ID", "Contract", "Status"].map((h) => (
               <th key={h} className="px-[18px] py-3 text-left text-[11.5px] font-bold text-faint">
                 {h}

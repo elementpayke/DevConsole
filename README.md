@@ -35,6 +35,21 @@ Open [http://localhost:3000](http://localhost:3000).
 | `NEXT_PUBLIC_LIVE_CONSOLE_URL` | Yes | Live console origin; sandbox shows “Log in to Live” |
 | `NEXT_PUBLIC_SANDBOX_CONSOLE_URL` | Yes | Sandbox console origin; live shows “Log in to Sandbox” |
 | `NEXT_PUBLIC_TURNSTILE_SITE_KEY` | Yes | Cloudflare Turnstile site key; widget omitted when empty |
+| `GITHUB_CLIENT_ID` / `GITHUB_CLIENT_SECRET` | **No** (server only) | "Continue with GitHub"; button route 503s when unset |
+| `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | **No** (server only) | "Continue with Google"; button route 503s when unset |
+
+### Social login (GitHub / Google)
+
+Authorization-code flow, terminated entirely in this app — the aggregator
+never holds a provider client secret or talks to GitHub/Google directly.
+`/api/auth/oauth/<provider>/start` redirects to the provider with a signed
+CSRF `state` cookie; `/api/auth/oauth/<provider>/callback` exchanges the
+code, fetches the verified profile, then calls the aggregator's
+`POST /auth/oauth/callback` (under the same `X-FE-Client-Secret` trust as
+`/auth/login`) to find-or-create the user and mint the usual session cookies.
+
+To enable a provider, register an OAuth app and set its client id/secret
+above — see `.env.example` for the exact console links and callback URLs.
 
 ### Cloudflare Turnstile
 
@@ -70,7 +85,26 @@ the BFF supplies the secret (Origin check is skipped on that path).
 
 ```bash
 npm run lint
+npm run typecheck
 npm run test          # unit + security checks
 npm run test:security # secret-leak / cookie flag checks
 npm run build
 ```
+
+## Real vs coming soon
+
+**Wired to the aggregator today:** auth/session, dashboard, transactions, API keys,
+reference tokens, merchant onboarding / vault attach, wallets balance (when linked),
+off-ramp quote/accept, collect profile create/`me`, payment links, invoices (pay link +
+client email; no email send yet), checkout method toggles, embed domain allowlist,
+paybill account-number generation, refund-request recording.
+
+**Hosted vanity pages:** `elementpay-checkout` serves `/{slug}` and `/{slug}/l/{link}`
+against aggregator public APIs. Apex rewrite on `elementpay-website` proxies unknown
+`elementpay.net/{slug}` paths to `pay.elementpay.net` (reserved marketing segments excluded).
+Embed runtime: `https://pay.elementpay.net/embed.js`. M-Pesa STK / card capture on pay
+sessions is not attached yet — sessions are created and polled only.
+
+**Still shell / ops-gated:** team invites, alert destinations, live C2B paybill
+provisioning (account numbers alone do not move money until ops provisions the shared
+paybill).

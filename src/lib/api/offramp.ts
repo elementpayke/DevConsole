@@ -126,6 +126,23 @@ export async function getOfframpCorridors() {
   });
 }
 
+/** Partner corridors filtered to OnRamp (collect / customer → merchant). */
+export async function getCollectCorridors() {
+  return offrampFetch<unknown>("corridors", {
+    query: { order_type: "OnRamp" },
+  });
+}
+
+/** Partner catalog for one country, OnRamp flow (collect methods + providers). */
+export async function getCollectCatalog(country: string) {
+  return offrampFetch<unknown>("catalog", {
+    query: {
+      order_type: "OnRamp",
+      country: country || undefined,
+    },
+  });
+}
+
 export type PaymentAccountBalance = {
   balance_usdc: number | null;
   currency: string;

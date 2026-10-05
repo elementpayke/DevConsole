@@ -187,14 +187,18 @@ function VerifyEmailForm() {
                 onKeyDown={(e) => handleKeyDown(idx, e)}
                 onFocus={(e) => e.target.select()}
                 aria-label={`Digit ${idx + 1} of ${CODE_LENGTH}`}
-                className="box-border h-12 w-11 rounded-lg border border-line-strong bg-white text-center font-sans text-lg font-bold tabular-nums outline-none focus:border-primary focus:ring-2 focus:ring-primary/15 sm:w-12"
+                className="box-border h-12 w-11 rounded-lg border border-line-strong text-center font-sans text-lg font-bold tabular-nums outline-none focus:border-primary focus:ring-2 focus:ring-primary/15 sm:w-12"
+                style={{ background: "var(--panel-solid)", color: "var(--ink)" }}
               />
             ))}
           </div>
         </div>
-        {error && <p className="text-[12.5px] font-medium text-[oklch(0.55_0.19_25)]">{error}</p>}
+        {error && <p className="text-[12.5px] font-medium" style={{ color: "var(--bad-text)" }}>{error}</p>}
         {resendMessage && (
-          <p className="rounded-lg border border-[oklch(0.75_0.08_145)] bg-[oklch(0.97_0.03_145)] px-3.5 py-2.5 text-[12.5px] font-medium text-[oklch(0.42_0.1_145)]">
+          <p
+            className="rounded-lg px-3.5 py-2.5 text-[12.5px] font-medium"
+            style={{ border: "1px solid var(--ok-text)", background: "var(--ok-bg)", color: "var(--ok-text)" }}
+          >
             {resendMessage}
           </p>
         )}

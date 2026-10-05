@@ -65,7 +65,7 @@ export function EditWebhookModal({
             Write-only — we never display an existing secret. Leave blank to keep it unchanged.
           </p>
         </div>
-        {error && <p className="text-[12.5px] font-medium text-[oklch(0.55_0.19_25)]">{error}</p>}
+        {error && <p className="text-[12.5px] font-medium" style={{ color: "var(--bad-text)" }}>{error}</p>}
         <div className="flex gap-2.5">
           <Button type="button" variant="secondary" onClick={onClose} className="flex-1">
             Cancel

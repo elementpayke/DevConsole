@@ -1,19 +1,18 @@
 /**
  * Color tokens that don't map cleanly onto reusable Tailwind utilities
- * (status badges, method colors, env badges) — ported directly from the
- * ElementPay Redesign mockup's inline oklch values.
+ * (status badges, method colors, env badges) — Industry / Console v4 steel ramp.
  */
 
 export const colors = {
-  ink: "oklch(0.19 0.02 264)",
-  muted: "oklch(0.48 0.015 264)",
-  subtle: "oklch(0.5 0.012 264)",
-  faint: "oklch(0.55 0.012 264)",
-  line: "oklch(0.91 0.006 264)",
-  lineStrong: "oklch(0.88 0.006 264)",
-  primary: "#4133d7",
-  primaryHover: "#352ab0",
-  primaryTint: "#f0effc",
+  ink: "#1d1f20",
+  muted: "#505356",
+  subtle: "#505356",
+  faint: "#75787b",
+  line: "rgba(29,31,32,0.1)",
+  lineStrong: "rgba(29,31,32,0.22)",
+  primary: "#5980a6",
+  primaryHover: "#416180",
+  primaryTint: "#eef6ff",
 
   sandbox: {
     bg: "oklch(0.94 0.04 240)",
@@ -46,8 +45,42 @@ export const colors = {
   operational: "oklch(0.6 0.14 152)",
 
   methodGet: "oklch(0.5 0.14 152)",
-  methodPost: "#352ab0",
-  methodOther: "oklch(0.5 0.012 264)",
+  methodPost: "#416180",
+  methodOther: "#505356",
+
+  /** CSS custom properties — read these via var(--token) so values track
+   * the active [data-theme] rather than being frozen at light-mode oklch. */
+  var: {
+    ink: "var(--ink)",
+    muted: "var(--muted)",
+    faint: "var(--faint)",
+    line: "var(--line)",
+    border: "var(--border)",
+    borderStrong: "var(--border-strong)",
+    surface: "var(--surface)",
+    surfaceSoft: "var(--surface-soft)",
+    panel: "var(--panel)",
+    indigo: "var(--indigo)",
+    indigoText: "var(--indigo-text)",
+    indigoTint: "var(--indigo-tint)",
+    indigoSoft: "var(--indigo-soft)",
+    onIndigo: "var(--on-indigo)",
+    okBg: "var(--ok-bg)",
+    okText: "var(--ok-text)",
+    warnBg: "var(--warn-bg)",
+    warnText: "var(--warn-text)",
+    badBg: "var(--bad-bg)",
+    badText: "var(--bad-text)",
+    codeBg: "var(--code-bg)",
+    codeText: "var(--code-text)",
+    codeLine: "var(--code-line)",
+    rail: "var(--rail)",
+    railLine: "var(--rail-line)",
+    railText: "var(--rail-text)",
+    railMuted: "var(--rail-muted)",
+    railDim: "var(--rail-dim)",
+    envBand: "var(--env-band)",
+  },
 } as const;
 
 export const STATUS_STYLE: Record<string, { bg: string; text: string }> = {

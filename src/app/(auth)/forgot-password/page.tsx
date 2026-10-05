@@ -132,7 +132,7 @@ export default function ForgotPasswordPage() {
               placeholder="Re-enter your new password"
             />
           </div>
-          {error && <p className="text-[12.5px] font-medium text-[oklch(0.55_0.19_25)]">{error}</p>}
+          {error && <p className="text-[12.5px] font-medium" style={{ color: "var(--bad-text)" }}>{error}</p>}
           {resendMessage && <p className="text-[12.5px] font-medium text-subtle">{resendMessage}</p>}
           <Button type="submit" disabled={loading} className="mt-2 w-full py-3.5 text-[14.5px]">
             {loading ? "Resetting…" : "Reset password"}

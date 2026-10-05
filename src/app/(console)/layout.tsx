@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect } from "react";
+import { Suspense, useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { useRequireAuth } from "@/lib/auth/useRequireAuth";
 import { useMerchantExperience } from "@/lib/auth/useMerchantExperience";
+import { RailProvider } from "@/lib/layout/RailContext";
 
 export default function ConsoleLayout({ children }: { children: React.ReactNode }) {
   const { isReady } = useRequireAuth();
@@ -28,9 +29,16 @@ export default function ConsoleLayout({ children }: { children: React.ReactNode 
   }
 
   return (
-    <div className="flex animate-fade-in">
-      <Sidebar />
-      <div className="min-w-0 flex-1">{children}</div>
-    </div>
+    <RailProvider>
+      <div className="flex min-h-screen animate-fade-in">
+        <Suspense fallback={null}>
+          <Sidebar />
+        </Suspense>
+        <div className="min-w-0 flex-1" style={{ background: "transparent" }}>
+          <div className="h-1" style={{ background: "var(--env-band)" }} />
+          {children}
+        </div>
+      </div>
+    </RailProvider>
   );
 }

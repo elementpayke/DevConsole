@@ -37,3 +37,20 @@ export function getBaseRpcUrl(): string {
   if (url) return url;
   return "https://mainnet.base.org";
 }
+
+export type OAuthClientConfig = { clientId: string; clientSecret: string };
+
+/** Null (not throw) when unset — lets the /start route 503 cleanly instead of crashing. */
+export function getGithubOAuthConfig(): OAuthClientConfig | null {
+  const clientId = process.env.GITHUB_CLIENT_ID?.trim();
+  const clientSecret = process.env.GITHUB_CLIENT_SECRET?.trim();
+  if (!clientId || !clientSecret) return null;
+  return { clientId, clientSecret };
+}
+
+export function getGoogleOAuthConfig(): OAuthClientConfig | null {
+  const clientId = process.env.GOOGLE_CLIENT_ID?.trim();
+  const clientSecret = process.env.GOOGLE_CLIENT_SECRET?.trim();
+  if (!clientId || !clientSecret) return null;
+  return { clientId, clientSecret };
+}

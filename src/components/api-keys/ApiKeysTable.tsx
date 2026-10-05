@@ -90,7 +90,7 @@ export function ApiKeysTable({
     <GlassCard className="overflow-hidden">
       <table className="w-full border-collapse">
         <thead>
-          <tr style={{ background: "oklch(0.98 0.003 264)" }}>
+          <tr style={{ background: "var(--surface-soft)" }}>
             {["Name", "Key", "Environment", "Last used", "Webhook", "Settings", ""].map((h) => (
               <th key={h || "actions"} className="px-[18px] py-3 text-left text-[11.5px] font-bold text-faint">
                 {h}

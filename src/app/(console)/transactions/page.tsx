@@ -97,7 +97,10 @@ export default function TransactionsPage() {
         </div>
 
         {error && (
-          <p className="mb-4 rounded-lg border border-line-strong bg-white p-3 text-[13px] text-[oklch(0.55_0.19_25)]">
+          <p
+            className="mb-4 rounded-lg border border-line-strong p-3 text-[13px]"
+            style={{ background: "var(--panel)", color: "var(--bad-text)" }}
+          >
             {error}
           </p>
         )}
