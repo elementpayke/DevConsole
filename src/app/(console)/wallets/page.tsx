@@ -11,6 +11,7 @@ import { ApiError } from "@/lib/api/client";
 import type { Order } from "@/lib/types";
 import { TopUpModal } from "@/components/wallets/TopUpModal";
 import { WalletTransferModal } from "@/components/wallets/WalletTransferModal";
+import { VerificationBanner } from "@/components/compliance/VerificationBanner";
 
 type Balance = { balance_usdc: number | null; has_account: boolean; balance_status: string };
 
@@ -69,6 +70,7 @@ export default function WalletsPage() {
     <>
       <Header title="Wallets" />
       <div className="flex flex-col gap-5 p-5 md:p-7">
+        <VerificationBanner surface="wallets" />
         {error && (
           <p className="rounded-lg border p-3 text-[13px]" style={{ borderColor: "var(--border-strong)", background: "var(--panel)", color: "var(--bad-text)" }}>
             {error}

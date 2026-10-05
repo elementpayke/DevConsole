@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { Header } from "@/components/layout/Header";
+import { VerificationBanner } from "@/components/compliance/VerificationBanner";
 
 /** Indicative only — no live rate feed is wired up yet. Firm pricing happens over WhatsApp/Telegram/email. */
 const INDICATIVE_RATE: Record<string, number> = { KES: 129, TZS: 2620, UGX: 3720, RWF: 1320, GHS: 15.4, NGN: 1550 };
@@ -27,6 +28,7 @@ export default function OtcPage() {
     <>
       <Header title="OTC desk" />
       <div className="flex flex-col gap-5 p-5 md:p-7">
+        <VerificationBanner surface="the OTC desk" />
         <Link href="/wallets" className="self-start text-[12.5px] font-semibold no-underline" style={{ color: "var(--muted)" }}>
           ← Wallets
         </Link>

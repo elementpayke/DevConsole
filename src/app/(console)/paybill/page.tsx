@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Header } from "@/components/layout/Header";
 import { Button } from "@/components/ui/Button";
+import { VerificationBanner } from "@/components/compliance/VerificationBanner";
 import {
   createPaybillReference,
   getMyCollectProfile,
@@ -60,6 +61,7 @@ export default function PaybillPage() {
     <>
       <Header title="Paybill" />
       <div className="flex flex-col gap-5 p-5 md:p-7">
+        <VerificationBanner surface="Paybill collections" />
         <Link href="/checkout" className="text-[12.5px] font-semibold no-underline" style={{ color: "var(--muted)" }}>
           ← Checkout
         </Link>
