@@ -1,12 +1,13 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { Suspense, useState, type FormEvent } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth, ApiError } from "@/lib/auth/AuthContext";
 import { PasswordInput } from "@/components/auth/PasswordInput";
 import { TurnstileWidget } from "@/components/auth/TurnstileWidget";
 import { Button } from "@/components/ui/Button";
+import { OAuthButtons, oauthErrorMessage } from "@/components/auth/OAuthButtons";
 import {
   canSubmitWithTurnstile,
   isTurnstileConfigured,
@@ -41,8 +42,18 @@ function isUnverifiedAccountError(message: unknown) {
 }
 
 export default function LoginPage() {
+  return (
+    <Suspense fallback={null}>
+      <LoginForm />
+    </Suspense>
+  );
+}
+
+function LoginForm() {
   const { login } = useAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const oauthError = oauthErrorMessage(searchParams.get("oauth_error"));
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [remember, setRemember] = useState(true);
@@ -90,6 +101,23 @@ export default function LoginPage() {
       <p className="mb-7 text-[13.5px] text-muted">
         Welcome back. Access your ElementPay Console and payout operations.
       </p>
+
+      {oauthError && (
+        <p
+          className="mb-4 rounded-lg px-3.5 py-2.5 text-[12.5px] font-medium"
+          style={{ background: "var(--warn-bg)", color: "var(--warn-text)" }}
+        >
+          {oauthError}
+        </p>
+      )}
+
+      <OAuthButtons role="user" />
+
+      <div className="my-5 flex items-center gap-3 text-[11.5px] font-semibold text-faint">
+        <span className="h-px flex-1" style={{ background: "var(--line)" }} />
+        or log in with email
+        <span className="h-px flex-1" style={{ background: "var(--line)" }} />
+      </div>
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         <div>
@@ -155,13 +183,7 @@ export default function LoginPage() {
         </Button>
       </form>
 
-      <div className="my-5 flex items-center gap-3">
-        <div className="h-px flex-1 bg-line" />
-        <span className="text-[12px] font-medium text-faint">or</span>
-        <div className="h-px flex-1 bg-line" />
-      </div>
-
-      <p className="text-center text-[13px] text-muted">
+      <p className="mt-5 text-center text-[13px] text-muted">
         No account yet?{" "}
         <Link href="/register" className="font-bold text-primary hover:text-primary-hover">
           Create one

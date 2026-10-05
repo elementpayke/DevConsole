@@ -6,6 +6,19 @@ export type ApiEnvelope<T> = {
 
 export type UserRole = "user" | "admin" | "internal" | "developer" | "merchant";
 
+export type PayoutMode = "local_currency" | "stablecoin";
+export type PayoutMethod = "mobile_money" | "bank";
+
+export type PayoutDestination = {
+  mode: PayoutMode;
+  currency?: string;
+  method?: PayoutMethod;
+  account_name?: string;
+  phone_number?: string;
+  account_number?: string;
+  bank_name?: string;
+};
+
 export type User = {
   id: number;
   email: string;
@@ -13,8 +26,34 @@ export type User = {
   is_active: boolean;
   kyc_verified: boolean;
   partner_customer_id?: string | null;
+  default_payout_json?: PayoutDestination | null;
   created_at: string;
   updated_at?: string | null;
+};
+
+export type PartnerCustomerStatus =
+  | "incomplete"
+  | "pending_review"
+  | "approved"
+  | "active"
+  | "rejected"
+  | "suspended";
+
+export type PartnerCustomer = {
+  id: string;
+  partner_customer_ref: string;
+  type: string;
+  status: PartnerCustomerStatus;
+  profile: Record<string, unknown>;
+  documents: Array<{ id: string; category: string }>;
+  products: { deposit_account: { status: string } };
+  created_at: string | null;
+  updated_at: string | null;
+  submitted_at: string | null;
+  /** Only present while status is "incomplete". */
+  missing?: string[];
+  /** Only present while status is "rejected". */
+  review_note?: string | null;
 };
 
 export type AuthTokens = {

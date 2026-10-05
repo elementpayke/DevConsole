@@ -12,8 +12,9 @@ import {
 } from "@/lib/api/collect";
 import { ApiError } from "@/lib/api/client";
 import { ComingSoonPanel } from "@/components/checkout/ComingSoonPanel";
+import { CheckoutPreviewPanel } from "@/components/checkout/CheckoutPreviewPanel";
 
-export function PaymentLinksPanel({ onPreview: _onPreview }: { onPreview: () => void }) {
+export function PaymentLinksPanel() {
   const [profile, setProfile] = useState<CollectProfile | null | undefined>(undefined);
   const [links, setLinks] = useState<PaymentLink[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -23,6 +24,7 @@ export function PaymentLinksPanel({ onPreview: _onPreview }: { onPreview: () => 
   const [currency, setCurrency] = useState<"KES" | "USDC">("KES");
   const [kind, setKind] = useState<"reusable" | "one_time">("reusable");
   const [copiedId, setCopiedId] = useState<number | null>(null);
+  const [previewLink, setPreviewLink] = useState<PaymentLink | null>(null);
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
@@ -161,6 +163,14 @@ export function PaymentLinksPanel({ onPreview: _onPreview }: { onPreview: () => 
             <span className="mono text-[13px] font-semibold">{link.currency} {link.amount.toLocaleString()}</span>
             <button
               type="button"
+              onClick={() => setPreviewLink(link)}
+              className="rounded-lg px-3 py-2 text-[12.5px] font-bold"
+              style={{ border: "1px solid var(--border-strong)", background: "var(--panel)" }}
+            >
+              Preview
+            </button>
+            <button
+              type="button"
               onClick={() => copyLink(link)}
               className="rounded-lg px-3 py-2 text-[12.5px] font-bold"
               style={{ border: "1px solid var(--border-strong)", background: "var(--panel)" }}
@@ -169,6 +179,10 @@ export function PaymentLinksPanel({ onPreview: _onPreview }: { onPreview: () => 
             </button>
           </div>
         ))
+      )}
+
+      {previewLink && (
+        <CheckoutPreviewPanel profile={profile} link={previewLink} onClose={() => setPreviewLink(null)} />
       )}
     </section>
   );

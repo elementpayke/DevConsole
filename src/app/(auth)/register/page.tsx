@@ -1,12 +1,13 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { Suspense, useState, type FormEvent } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth, ApiError } from "@/lib/auth/AuthContext";
 import { PasswordInput } from "@/components/auth/PasswordInput";
 import { TurnstileWidget } from "@/components/auth/TurnstileWidget";
 import { Button } from "@/components/ui/Button";
+import { OAuthButtons, oauthErrorMessage } from "@/components/auth/OAuthButtons";
 import {
   canSubmitWithTurnstile,
   isTurnstileConfigured,
@@ -16,8 +17,18 @@ import { isMerchantSignupEnabled } from "@/lib/merchantSignup";
 type AccountType = "merchant" | "developer";
 
 export default function RegisterPage() {
+  return (
+    <Suspense fallback={null}>
+      <RegisterForm />
+    </Suspense>
+  );
+}
+
+function RegisterForm() {
   const { register } = useAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const oauthError = oauthErrorMessage(searchParams.get("oauth_error"));
   const merchantSignupOpen = isMerchantSignupEnabled();
   const [accountType, setAccountType] = useState<AccountType>(
     merchantSignupOpen ? "merchant" : "developer",
@@ -67,6 +78,23 @@ export default function RegisterPage() {
       <p className="mb-7 text-[13.5px] text-muted">
         Merchants collect and withdraw. Developers integrate with API keys.
       </p>
+
+      {oauthError && (
+        <p
+          className="mb-4 rounded-lg px-3.5 py-2.5 text-[12.5px] font-medium"
+          style={{ background: "var(--warn-bg)", color: "var(--warn-text)" }}
+        >
+          {oauthError}
+        </p>
+      )}
+
+      <OAuthButtons role={accountType === "merchant" && merchantSignupOpen ? "merchant" : "user"} />
+
+      <div className="my-5 flex items-center gap-3 text-[11.5px] font-semibold text-faint">
+        <span className="h-px flex-1" style={{ background: "var(--line)" }} />
+        or sign up with email
+        <span className="h-px flex-1" style={{ background: "var(--line)" }} />
+      </div>
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         <div>
