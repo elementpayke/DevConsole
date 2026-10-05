@@ -7,13 +7,16 @@ import { MerchantWalletBanner } from "@/components/merchant/MerchantWalletBanner
 import { useAuth } from "@/lib/auth/AuthContext";
 import { useMerchantExperience } from "@/lib/auth/useMerchantExperience";
 import { usePartnerCustomer } from "@/lib/auth/usePartnerCustomer";
+import { usePersona } from "@/lib/auth/usePersona";
 import { RequestLiveAccessModal } from "@/components/compliance/RequestLiveAccessModal";
 import { GoLiveModal } from "@/components/compliance/GoLiveModal";
+import { PersonaPicker } from "@/components/dashboard/PersonaPicker";
 import { getDashboardStats } from "@/lib/api/dashboard";
 import { listMyOrders } from "@/lib/api/orders";
+import { listApiKeys } from "@/lib/api/apiKeys";
 import { ApiError } from "@/lib/api/client";
 import { statusStyle } from "@/lib/theme";
-import type { CurrencyStats, DashboardStats, Order, PartnerCustomerStatus } from "@/lib/types";
+import type { ApiKeyInfo, CurrencyStats, DashboardStats, Order, PartnerCustomerStatus } from "@/lib/types";
 
 /** Local-calendar day key (not UTC) so "today" matches the merchant's own clock. */
 function dayKey(date: Date) {
@@ -101,6 +104,7 @@ export default function DashboardPage() {
     };
   }, [isAuthenticated]);
 
+  const { persona, setPersona, loaded: personaLoaded } = usePersona();
   const firstName = user?.email?.split("@")[0] ?? "there";
   const isFresh = (stats?.summary.total_transactions ?? 0) === 0;
 
@@ -135,6 +139,10 @@ export default function DashboardPage() {
           <p className="rounded-lg border p-3 text-[13px]" style={{ borderColor: "var(--border-strong)", background: "var(--panel)", color: "var(--bad-text)" }}>
             {error}
           </p>
+        ) : stats && isFresh && personaLoaded && !persona ? (
+          <PersonaPicker firstName={firstName} onChoose={setPersona} />
+        ) : stats && isFresh && persona === "developer" ? (
+          <DeveloperFreshOverview firstName={firstName} stats={stats} />
         ) : stats && isFresh ? (
           <FreshOverview firstName={firstName} />
         ) : stats ? (
@@ -266,6 +274,160 @@ function FreshOverview({ firstName }: { firstName: string }) {
           )}
         </section>
       </div>
+
+      {modal === "request" && partnerCustomer && (
+        <RequestLiveAccessModal
+          partnerCustomer={partnerCustomer}
+          onClose={() => setModal(null)}
+          onSubmitted={refresh}
+        />
+      )}
+      {modal === "golive" && <GoLiveModal onClose={() => setModal(null)} />}
+    </div>
+  );
+}
+
+/** Sandbox-stats home for the "Build with the API" persona — real data only, no invented telemetry. */
+function DeveloperFreshOverview({ firstName, stats }: { firstName: string; stats: DashboardStats }) {
+  const { partnerCustomer, loading: partnerLoading, refresh } = usePartnerCustomer();
+  const [keys, setKeys] = useState<ApiKeyInfo[] | null>(null);
+  const [modal, setModal] = useState<"request" | "golive" | null>(null);
+  const status = partnerCustomer?.status ?? "incomplete";
+  const copy = FRESH_STATUS_COPY[status];
+
+  useEffect(() => {
+    let cancelled = false;
+    listApiKeys()
+      .then((list) => !cancelled && setKeys(list))
+      .catch(() => !cancelled && setKeys([]));
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const activeKeys = (keys ?? []).filter((k) => !k.revoked);
+  const hasKey = activeKeys.length > 0;
+  const hasWebhook = activeKeys.some((k) => k.has_webhook_config);
+  const hasSettledOrder = stats.summary.settled_orders > 0;
+  const settledRate =
+    stats.summary.total_transactions > 0
+      ? Math.round((stats.summary.settled_orders / stats.summary.total_transactions) * 100)
+      : null;
+
+  const checklist = [
+    { title: "Sandbox key issued", note: "Needed to accept your first payment.", done: hasKey },
+    { title: "First checkout link paid", note: "A hosted link returned a paid webhook.", done: hasSettledOrder },
+    { title: "Webhook verified", note: "Signature check passed on a test delivery.", done: hasWebhook },
+    {
+      title: "Live key requested",
+      note: status === "incomplete" ? "KYB review — usually under 24h." : "In review or done.",
+      done: status !== "incomplete",
+    },
+  ];
+
+  return (
+    <div className="flex max-w-[980px] flex-col gap-4">
+      <section
+        className="relative overflow-hidden rounded-2xl px-6 py-7"
+        style={{ background: "var(--indigo)", color: "var(--on-indigo)" }}
+      >
+        <span
+          className="pointer-events-none absolute -top-14 -right-12 h-56 w-56 rounded-full"
+          style={{ background: "rgba(255,255,255,0.08)" }}
+        />
+        <span className="relative mb-2 inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11.5px] font-bold" style={{ background: "rgba(255,255,255,0.16)" }}>
+          <span className="h-1.5 w-1.5 rounded-full" style={{ background: "#ffd166" }} />
+          {copy.pill}
+        </span>
+        <h1 className="relative m-0 text-[28px] leading-tight font-extrabold">Welcome, {firstName}</h1>
+        <p className="relative mt-1 max-w-[52ch] text-sm opacity-90">{copy.intro}</p>
+      </section>
+
+      <div className="grid grid-cols-2 gap-3.5 sm:grid-cols-4">
+        {[
+          { label: "Test orders", value: stats.summary.total_transactions },
+          { label: "Settled rate", value: settledRate !== null ? `${settledRate}%` : "—" },
+          { label: "Pending", value: stats.summary.pending_orders },
+          { label: "Sandbox keys", value: keys === null ? "…" : activeKeys.length },
+        ].map((k) => (
+          <div
+            key={k.label}
+            className="flex flex-col gap-1 rounded-xl px-[18px] py-4"
+            style={{ background: "var(--panel)", border: "1px solid var(--border)" }}
+          >
+            <span className="text-[11px] font-bold tracking-wide uppercase" style={{ color: "var(--muted)" }}>
+              {k.label}
+            </span>
+            <span className="mono text-[22px] leading-none font-bold">{k.value}</span>
+          </div>
+        ))}
+      </div>
+
+      <section className="overflow-hidden rounded-xl" style={{ background: "var(--panel)", border: "1px solid var(--border)" }}>
+        <div className="flex items-center gap-3 px-[18px] pt-4 pb-3">
+          <span className="text-[15px] font-bold">Integration checklist</span>
+          <span className="ml-auto text-[12px]" style={{ color: "var(--muted)" }}>
+            {checklist.filter((c) => c.done).length} of {checklist.length} done
+          </span>
+        </div>
+        <div className="grid grid-cols-1 gap-0 sm:grid-cols-2">
+          {checklist.map((c) => (
+            <div
+              key={c.title}
+              className="flex items-start gap-2.5 px-[18px] py-3.5"
+              style={{ borderTop: "1px solid var(--line)" }}
+            >
+              <span
+                className="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full text-[10px] font-bold"
+                style={{
+                  background: c.done ? "var(--indigo)" : "transparent",
+                  border: c.done ? "none" : "1.5px solid var(--border-strong)",
+                  color: "var(--on-indigo)",
+                }}
+              >
+                {c.done ? "✓" : ""}
+              </span>
+              <span>
+                <span className="block text-[13px] font-semibold">{c.title}</span>
+                <span className="block text-xs" style={{ color: "var(--muted)" }}>{c.note}</span>
+              </span>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {!partnerLoading && status === "incomplete" && partnerCustomer && (
+        <Link
+          href="#"
+          onClick={(e) => {
+            e.preventDefault();
+            setModal("request");
+          }}
+          className="self-start rounded-lg px-3.5 py-2.5 text-[13px] font-semibold no-underline"
+          style={{ border: "1px solid var(--border-strong)", background: "var(--panel)", color: "var(--ink)" }}
+        >
+          Request live access
+        </Link>
+      )}
+      {!partnerLoading && !partnerCustomer && (
+        <Link
+          href="/onboarding"
+          className="self-start rounded-lg px-3.5 py-2.5 text-[13px] font-semibold no-underline"
+          style={{ border: "1px solid var(--border-strong)", background: "var(--panel)", color: "var(--ink)" }}
+        >
+          Add business details
+        </Link>
+      )}
+      {!partnerLoading && status === "approved" && (
+        <button
+          type="button"
+          onClick={() => setModal("golive")}
+          className="self-start rounded-lg px-3.5 py-2.5 text-[13px] font-semibold"
+          style={{ border: "1px solid var(--border-strong)", background: "var(--indigo)", color: "var(--on-indigo)" }}
+        >
+          Go live
+        </button>
+      )}
 
       {modal === "request" && partnerCustomer && (
         <RequestLiveAccessModal
