@@ -106,7 +106,7 @@ function CheckoutContent() {
         </div>
 
         <div className="max-w-[920px]">
-          {tab === "links" && <PaymentLinksPanel onPreview={() => undefined} />}
+          {tab === "links" && <PaymentLinksPanel />}
           {tab === "invoices" && <InvoicesPanel />}
           {tab === "embed" && <EmbedPanel />}
           {tab === "api" && <ApiModePanel />}
